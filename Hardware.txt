@@ -1,8 +1,9 @@
 Hardware:
 
-Modulo LCD 16x4
+Modulo LCD 20x4
 Relay (Bomba)
 Modulo Puente H (L298M para fan)
+Motor paso a paso
 Botones
 Sensor de humedad del suelo (YL-69)
 Sensor de humedad relativa y temperatura (Dht22)
