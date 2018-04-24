@@ -5,5 +5,5 @@ Relay (Bomba)
 Modulo Puente H (L298M para fan)
 Botones
 Sensor de humedad del suelo (YL-69)
-Sensor de humedad relativa y temperatura
+Sensor de humedad relativa y temperatura (Dht22)
 Reloj RTC
