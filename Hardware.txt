@@ -1,0 +1,9 @@
+Hardware:
+
+Modulo LCD 16x4
+Relay (Bomba)
+Modulo Puente H (L298M para fan)
+Botones
+Sensor de humedad del suelo
+Sensor de humedad relativa y temperatura
+Reloj RTC
