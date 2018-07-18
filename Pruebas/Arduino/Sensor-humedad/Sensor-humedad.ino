@@ -24,6 +24,7 @@ void loop() {
   }
   
   
-  Serial.print("Humdad:");
+  Serial.print("Humdad: ");
   Serial.println(porcentaje);
+  promedio = 0;
 }
