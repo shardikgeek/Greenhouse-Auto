@@ -5,6 +5,7 @@ void setup() {
 
 void loop() {
   Serial.print("Humedad: ");
-  Serial.println(analogRead(A0));
+  Serial.print(analogRead(A0));
+  Serial.println("%%");
   delay(1000);
 }
