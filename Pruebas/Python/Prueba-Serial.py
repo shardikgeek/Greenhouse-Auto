@@ -4,6 +4,9 @@ import time
 ser = serial.Serial()
 ser.baudrate = 9600
 ser.port = "COM3"
+ser.parity = 'N'
+ser.bytesize = 8
+ser.stopbits = 1
 ser.open()
 n = 10
 
