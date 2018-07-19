@@ -99,17 +99,26 @@ void desempaquetar(){
     datos += paquete[n];
     n++;
   }
+  
 }
 
 void procesar_paquete(){
   if(comando == "HELLO"){
-    Serial.println("Hola humano.");
+    Serial.write(":STR,5,hello$");
   }
   else if(comando == "TEMP"){
-    Serial.println("La temperatura es:");
+    Serial.println("La temperatura es -> ");
   }
   else if(comando == "HUM"){
-    Serial.println("La humedad es:");
+    Serial.println("La humedad es -> ");
+  }
+  else if(comando == "STR"){
+    if(cant_datos.toInt() == datos.length() ){
+    Serial.println("------");
+    Serial.println(datos);
+    }
+    else
+      Serial.println("ERROR");
   }
   else
     Serial.println("Comando incorrecto");
