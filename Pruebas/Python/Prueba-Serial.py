@@ -1,19 +1,6 @@
-import serial
-import time
-
-ser = serial.Serial()
-ser.baudrate = 9600
-ser.port = "COM3"
-ser.parity = 'N'
-ser.bytesize = 8
-ser.stopbits = 1
-ser.open()
-n = 10
-
-while n:
-    line = ser.readline()
-    print(line)
-    n-=1
-    time.sleep(1)
-
-ser.close()
+import serial, time
+arduino = serial.Serial('COM3', 9600)
+time.sleep(2)
+rawString = arduino.readline()
+print(rawString)
+arduino.close()
