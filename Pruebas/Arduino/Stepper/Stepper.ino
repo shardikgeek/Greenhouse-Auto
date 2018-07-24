@@ -9,7 +9,7 @@
 #define IN3  10
 #define IN4  9
 
-int steps_left=4095;
+int steps_left=8000;
 boolean Direction = true;
 int Steps = 0;
 
@@ -42,7 +42,7 @@ void loop()
          }
       delay(300);
       Direction=!Direction;
-      steps_left=4095;
+      steps_left=8000;
 }
 
 void stepper()            //Avanza un paso
