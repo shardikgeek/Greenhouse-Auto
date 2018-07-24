@@ -4,21 +4,28 @@
 #include "DHT.h"
 
 #define DHTPIN 2     // what digital pin we're connected to
-
-// Uncomment whatever type you're using!
 #define DHTTYPE DHT11   // DHT 11
-//#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
-//#define DHTTYPE DHT21   // DHT 21 (AM2301)
 
+#define R_FAN 7
+#define R_CAL 8
+#define HISTERESIS 1  
 
-#define MAX_TEMP 22
-#define MIN_TEMP 12
-#define TEMP_OBJETIVO 17
+#define TEMP_OBJ_FAN 18
+#define TEMP_MAX_FAN TEMP_OBJ_FAN+HISTERESIS
+#define TEMP_MIN_FAN  TEMP_OBJ_FAN-HISTERESIS
+
+#define TEMP_OBJ_CAL 12
+#define TEMP_MAX_CAL TEMP_OBJ_CAL+HISTERESIS
+#define TEMP_MIN_CAL  TEMP_OBJ_CAL-HISTERESIS
 
 int hum_ext;
 int temp_ext;
 int hum_int;
 int temp_int;
+
+int temp;
+bool fan_flag = false;
+bool cal_flag = false;
 
 // Connect pin 1 (on the left) of the sensor to +5V
 // NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
@@ -31,43 +38,30 @@ int temp_int;
 // Note that older versions of this library took an optional third parameter to
 // tweak the timings for faster processors.  This parameter is no longer needed
 // as the current DHT reading algorithm adjusts itself to work on faster procs.
+
 DHT dht(DHTPIN, DHTTYPE);
 DHT dht2(4,DHTTYPE);
 
 void leer_dht();
 void leer_dht2();
 void imprimir_ht();
+void control_temp();
 
 void setup() {
-  pinMode(A5,INPUT);
-  Serial.begin(9600);
-
-  dht.begin();
+  pinMode(R_FAN,OUTPUT);
+  pinMode(R_CAL,OUTPUT);
+  digitalWrite(R_FAN,HIGH);
+  digitalWrite(R_CAL,HIGH);
   dht2.begin();
+  Serial.begin(9600);
 }
 
 void loop() {
   // Wait a few seconds between measurements.
-  leer_dht();
   leer_dht2();
+  control_temp();
   imprimir_ht();
-
-  if(temp_int == TEMP_OBJETIVO)
-    Serial.println("Todo apagado");
-  else if(temp_int < TEMP_OBJETIVO){
-    Serial.println("Prender Calentador");
-  }
-  else if(temp_int > TEMP_OBJETIVO && temp_ext > MIN_TEMP)
-    Serial.println("Encender ventilador");
-  else if(temp_int > TEMP_OBJETIVO && temp_ext <= MIN_TEMP)
-    Serial.println("Todo apagado");
-
-  
-
-  
-
- 
-   delay(2000);
+  delay(2000);
 
 }
 
@@ -85,8 +79,8 @@ void leer_dht(){
 
 void leer_dht2(){
 
-  hum_int = dht2.readHumidity();
-  temp_int = dht2.readTemperature();
+  hum_int = dht.readHumidity();
+  temp_int = dht.readTemperature();
 
   // Check if any reads failed and exit early (to try again).
   if (isnan(hum_int) || isnan(temp_int)) {
@@ -98,10 +92,27 @@ void leer_dht2(){
 void imprimir_ht(){
   Serial.print("temperatura interna: ");
   Serial.println(temp_int);
-  Serial.print("temperatura externa: ");
-  Serial.println(temp_ext);
-  Serial.println("-----------");
-  
+}
+
+void control_temp(){
+
+  if(temp_int > TEMP_MAX_FAN && !fan_flag){
+    digitalWrite(R_FAN,LOW);
+    fan_flag = true;
+  }
+  else if(temp_int <= TEMP_MIN_FAN && fan_flag){
+    digitalWrite(R_FAN,HIGH);
+    fan_flag = false;
+  }
+
+  if(temp_int < TEMP_MIN_CAL && !cal_flag){
+    digitalWrite(R_CAL,LOW);
+    cal_flag = true;
+  }
+  else if(temp_int >= TEMP_MAX_CAL && cal_flag){
+    digitalWrite(R_CAL,HIGH);
+    cal_flag = false;
+  }
 }
 
 
