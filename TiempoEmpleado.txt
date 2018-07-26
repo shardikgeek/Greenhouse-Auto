@@ -1,4 +1,6 @@
 ﻿16/07/18 - Planificación del hardware - 3,5 horas o 210 min.
 17/07/18 - Compra de sensores y prueba de sensores- 6,5 horas o 390 min. 
 18/07/18 - Prueba de sensores y comunicacion serial (con arduino) - 4,4 horas o 260 min.
-19/07/18 - Prueba de adc con STM32, comienzo del esquematico y mas comunicacion serial - 5 horas.
+19/07/18 - Prueba de adc con STM32, comienzo del esquematico y más comunicacion serial - 5 horas.
+23/07/18 - Prueba del RTC (con arduino), control de temperaturas (interior y exterior) y continuación del esquematico - 4 horas.
+24/07/18 - Prueba del RTC (con STM32), temperatura con control de histeresis - 4,5 horas.
