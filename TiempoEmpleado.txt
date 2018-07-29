@@ -5,3 +5,4 @@
 23/07/18 - Prueba del RTC (con arduino), control de temperaturas (interior y exterior) y continuación del esquematico - 4 horas.
 24/07/18 - Prueba del RTC (con STM32), temperatura con control de histeresis - 4,5 horas.
 26/07/18 - Finalizacion del esquematico, implementacion de un pequeño menu (con STM32). - 4 horas.
+27/07/18 - Diseño del PCB, continuamos el menu sin sensores (con STM32) - 4 horas.
