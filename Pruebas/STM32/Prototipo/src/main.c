@@ -4,9 +4,6 @@
 #include "menu.h"
 
 // Prototipos de funciones.
-void mostrarTexto();
-void inicializar_pines();
-
 
 int main(void){
 
@@ -49,8 +46,7 @@ void mostrarTexto(){
 	estado_mostrar_texto = (estado_mostrar_texto>1) ? 0 : estado_mostrar_texto;
 }
 
-void inicializar_pines()
-{
+void inicializar_pines(){
 	/* Funcion inicializar_pines()
 	 * Inicializa 3 leds de la placa Discovery como salida(D12, D13 y D14)y 3 botones externos
 	 * como entrada(C0, C1 y C2).
@@ -84,8 +80,8 @@ void inicializar_pines()
 	GPIO_Init_Pins.GPIO_PuPd = GPIO_PuPd_NOPULL;
 
 	GPIO_Init(GPIOC, &GPIO_Init_Pins);// Carga de la estrucura de datos.
-
 }
+
 
 
 
