@@ -2,6 +2,18 @@
 #include <SD.h>
 #include "DHT.h"
 
+
+/*Pines usados
+ * SD:
+ ** MOSI - pin 11
+ ** MISO - pin 12
+ ** CLK - pin 13
+ ** CS - pin 4 (for MKRZero SD: SDCARD_SS_PIN)
+ * 
+ * DHT11:
+ * Señal - pin 2
+  */
+
 #define DHTPIN 2     // what digital pin we're connected to
 #define DHTTYPE DHT11   // DHT 11
 
