@@ -1,0 +1,129 @@
+!SESSION 2018-08-03 09:58:25.479 -----------------------------------------------
+eclipse.buildId=unknown
+java.version=1.8.0_152
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=es_ES
+Command-line arguments:  -os win32 -ws win32 -arch x86
+
+!ENTRY com.atollic.truestudio.productmanager 1 0 2018-08-03 09:58:57.527
+!MESSAGE Loading product manager
+
+!ENTRY com.atollic.truestudio.productmanager 1 0 2018-08-03 09:58:57.558
+!MESSAGE OS info: Windows 10, 10.0, x86
+
+!ENTRY TrueSTUDIO 1 0 2018-08-03 09:59:01.324
+!MESSAGE Target: STM32, Version: 9.0.1, Build date: 20180420-1214, Installation dir: /C:/Program Files (x86)/Atollic/TrueSTUDIO for STM32 9.0.1/ide/
+
+!ENTRY TrueSTUDIO 1 0 2018-08-03 09:59:01.324
+!MESSAGE Workspace: E:\GitHub\Greenhouse-Auto\Pruebas\STM32
+
+!ENTRY org.eclipse.jface 2 0 2018-08-03 09:59:08.305
+!MESSAGE Keybinding conflicts occurred.  They may interfere with normal accelerator operation.
+!SUBENTRY 1 org.eclipse.jface 2 0 2018-08-03 09:59:08.305
+!MESSAGE A conflict occurred for ALT+CTRL+T:
+Binding(ALT+CTRL+T,
+	ParameterizedCommand(Command(org.eclipse.team.svn.ui.command.EditPropertiesCommand,Show Properties,
+		,
+		Category(org.eclipse.team.svn.ui.command.category,SVN,null,true),
+		org.eclipse.ui.internal.WorkbenchHandlerServiceHandler@8e5b23,
+		,,true),null),
+	org.eclipse.ui.defaultAcceleratorConfiguration,
+	org.eclipse.ui.contexts.window,,,system)
+Binding(ALT+CTRL+T,
+	ParameterizedCommand(Command(org.eclipse.tm.terminal.connector.local.command.launch,Open Local Terminal on Selection,
+		,
+		Category(org.eclipse.tm.terminal.view.ui.commands.category,Terminal Commands,null,true),
+		org.eclipse.ui.internal.WorkbenchHandlerServiceHandler@1cb1414,
+		,,true),null),
+	org.eclipse.ui.defaultAcceleratorConfiguration,
+	org.eclipse.ui.contexts.window,,,system)
+
+!ENTRY com.atollic.truestudio.integration.processorexpert 0 0 2018-08-03 09:59:22.211
+!MESSAGE Atollic TrueSTUDIO Processor Expert integration is up.
+
+!ENTRY edu.hawaii.ics.csdl.jupiter 1 0 2018-08-03 09:59:22.992
+!MESSAGE Code Review is up.
+
+!ENTRY org.eclipse.cdt.core 1 0 2018-08-03 10:01:43.660
+!MESSAGE Indexed 'Prototipo' (36 sources, 83 headers) in 5,75 sec: 9.543 declarations; 31.674 references; 1 unresolved inclusions; 34 syntax errors; 0 unresolved names (0 %)
+
+!ENTRY org.eclipse.ui 4 4 2018-08-03 10:07:10.800
+!MESSAGE Referenced part does not exist yet: org.eclipse.ui.views.TaskList.
+
+!ENTRY com.atollic.truestudio.common.wizards 4 0 2018-08-03 10:12:21.792
+!MESSAGE Failed to find the correct FPU ABI, falling back to Soft. Value: 
+
+!ENTRY com.atollic.truestudio.common.wizards 4 0 2018-08-03 10:12:24.071
+!MESSAGE Failed to find the correct FPU ABI, falling back to Soft. Value: 
+
+!ENTRY com.atollic.truestudio.common.wizards 4 0 2018-08-03 10:12:28.712
+!MESSAGE Failed to find the correct FPU ABI, falling back to Soft. Value: 
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:36.786
+!MESSAGE Failed to find device info
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:36.796
+!MESSAGE Failed to find device info
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:36.805
+!MESSAGE Failed to find device info
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:36.815
+!MESSAGE Failed to find device info
+
+!ENTRY com.atollic.truestudio.mbs 2 0 2018-08-03 10:12:36.896
+!MESSAGE Test_Interrupciones needs property 'com.atollic.truestudio.general.runtimelib.1910739931' fixed. Fixing to 'com.atollic.truestudio.ld.general.clib.small'.
+
+!ENTRY com.atollic.truestudio.mbs 2 0 2018-08-03 10:12:36.905
+!MESSAGE Failed to get device info (Debug) for project Test_Interrupciones
+
+!ENTRY com.atollic.truestudio.mbs 2 0 2018-08-03 10:12:36.905
+!MESSAGE Failed to get device info (Debug) for project Test_Interrupciones
+
+!ENTRY com.atollic.truestudio.mbs 2 0 2018-08-03 10:12:36.916
+!MESSAGE Failed to get device info (Debug) for project Test_Interrupciones
+
+!ENTRY com.atollic.truestudio.mbs 2 0 2018-08-03 10:12:36.922
+!MESSAGE Test_Interrupciones needs property 'com.atollic.truestudio.general.runtimelib.1722218329' fixed. Fixing to 'com.atollic.truestudio.ld.general.clib.small'.
+
+!ENTRY com.atollic.truestudio.mbs 2 0 2018-08-03 10:12:36.926
+!MESSAGE Failed to get device info (Release) for project Test_Interrupciones
+
+!ENTRY com.atollic.truestudio.mbs 2 0 2018-08-03 10:12:36.932
+!MESSAGE Failed to get device info (Release) for project Test_Interrupciones
+
+!ENTRY com.atollic.truestudio.mbs 2 0 2018-08-03 10:12:36.932
+!MESSAGE Failed to get device info (Release) for project Test_Interrupciones
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:36.972
+!MESSAGE Failed to find device info
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:36.982
+!MESSAGE Failed to find device info
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:36.992
+!MESSAGE Failed to find device info
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:36.992
+!MESSAGE Failed to find device info
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:37.065
+!MESSAGE Failed to find device info
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:37.072
+!MESSAGE Failed to find device info
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:40.042
+!MESSAGE Failed to find device info
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:40.432
+!MESSAGE Failed to find device info
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:40.902
+!MESSAGE Failed to find device info
+
+!ENTRY com.atollic.truestudio.mbs 4 0 2018-08-03 10:12:41.372
+!MESSAGE Failed to find device info
+
+!ENTRY org.eclipse.cdt.core 1 0 2018-08-03 10:13:16.171
+!MESSAGE Indexed 'Test_Interrupciones' (35 sources, 36 headers) in 2,28 sec: 7.239 declarations; 20.353 references; 8 unresolved inclusions; 61 syntax errors; 6.834 unresolved names (20 %)
