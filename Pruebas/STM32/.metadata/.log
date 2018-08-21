@@ -127,3 +127,6 @@ Binding(ALT+CTRL+T,
 
 !ENTRY org.eclipse.cdt.core 1 0 2018-08-03 10:13:16.171
 !MESSAGE Indexed 'Test_Interrupciones' (35 sources, 36 headers) in 2,28 sec: 7.239 declarations; 20.353 references; 8 unresolved inclusions; 61 syntax errors; 6.834 unresolved names (20 %)
+
+!ENTRY com.atollic.truestudio.productmanager 1 0 2018-08-03 12:42:57.918
+!MESSAGE Unloading product manager
