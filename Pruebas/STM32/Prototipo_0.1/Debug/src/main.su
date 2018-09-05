@@ -1,0 +1,9 @@
+core_cm4.h:1535:22:NVIC_SetPriority	16	static
+core_cm4.h:1662:26:SysTick_Config	16	static
+discovery_io.h:15:6:enableSystick	8	static
+discovery_io.h:20:6:delay	16	static
+discovery_io.h:31:6:TimingDelay_Decrement	4	static
+discovery_io.h:43:6:inicializar_boton_user	16	static
+discovery_io.h:62:6:inicializar_leds	16	static
+discovery_io.h:81:6:boton_press	16	static
+main.c:47:5:main	8	static

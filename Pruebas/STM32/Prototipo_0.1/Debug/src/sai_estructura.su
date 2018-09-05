@@ -1,0 +1,3 @@
+sai_estructura.c:21:6:scheduler	4	static
+sai_estructura.c:41:6:flag_checker	8	static
+sai_estructura.c:55:6:leer	24	static
