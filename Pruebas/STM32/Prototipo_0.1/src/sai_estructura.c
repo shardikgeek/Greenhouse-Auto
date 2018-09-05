@@ -13,10 +13,20 @@ struct{
 
 struct{
 	uint16_t contador;
+	uint16_t adc_cuentas;
 	uint8_t flag;
 }ldr;
 
-int adc_cuentas;
+struct{
+	uint16_t contador;
+	uint16_t adc_cuentas;
+	uint8_t flag;
+}yl;
+
+struct{
+	uint16_t contador;
+	uint8_t flag;
+}display;
 
 void scheduler(void){
 	if(led.contador >= 1){
@@ -35,6 +45,22 @@ void scheduler(void){
 		ldr.contador = 500;
 	}
 
+	if(yl.contador >= 1){
+		yl.contador--;
+	}
+	else{
+		yl.flag = 1;
+		yl.contador = 500;
+	}
+
+	if(display.contador >= 1){
+		display.contador--;
+	}
+	else{
+		display.flag = 1;
+		display.contador = 1000;
+	}
+
 
 }
 
@@ -46,18 +72,27 @@ void flag_checker(void){
 	default:GPIO_ResetBits(GPIOD,GPIO_Pin_13);break;
 	}
 
+	if(display.flag){
+		refresh_display();
+		display.flag = 0;
+	}
+
 	if(ldr.flag){
-		leer();
+		ldr.adc_cuentas = adc_leer_cuentas_ldr();
 		ldr.flag = 0;
 	}
+
+	if(yl.flag){
+		yl.adc_cuentas = adc_leer_cuentas_yl69();
+		yl.flag = 0;
+	}
+
 }
 
-void leer(){
-
+void refresh_display(void){
 	char buffer[10];
-	adc_cuentas = adc_leer_cuentas_ldr();
-	sprintf(buffer,"%d   ",adc_cuentas);
+	sprintf(buffer,"%d   ",ldr.adc_cuentas);
 	UB_LCD_2x16_String(10,0,buffer);
-
-
+	sprintf(buffer,"%d   ",yl.adc_cuentas);
+	UB_LCD_2x16_String(10,1,buffer);
 }

@@ -13,7 +13,6 @@
 #include "stm32_ub_lcd_2x16.h"
 void scheduler(void);
 void flag_checker(void);
-void leer(void);
-
+void refresh_display(void);
 
 #endif /* SAI_ESTRUCTURA_H_ */
