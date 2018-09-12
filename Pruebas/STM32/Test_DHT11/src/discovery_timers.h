@@ -6,15 +6,14 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx_it.h"
-#include <stm32f4xx_tim.h>
-#include <stm32f4xx_gpio.h>
+//#include "stm32f4xx_it.h"
+#include "dht.h"
+//#include <stm32f4xx_tim.h>
+//#include <stm32f4xx_gpio.h>
 #define L_VERDE	GPIO_Pin_12
 #define L_NARAN	GPIO_Pin_13
 #define L_ROJO	GPIO_Pin_14
 #define L_AZUL	GPIO_Pin_15
-
-void mostrarTexto();
 
 /////////////////////////// TIMER 3/////////////////////////////
 void TIM3_Init(void){
@@ -141,9 +140,9 @@ void TIM5_Init(void){
 
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 	uint16_t PrescalerValue = 0; // Variable para el prescaler.
-	uint16_t frecuencia = 10e3; // Frecuencia del contador a 10kHz. Tener cuidado de no cometer overflow en la variable PrescalerValue.
+	uint32_t frecuencia = 10e6; // Frecuencia del contador a 10kHz. Tener cuidado de no cometer overflow en la variable PrescalerValue.
 	PrescalerValue = (uint16_t) ((SystemCoreClock /2) / frecuencia) - 1; //Conversion de frecuencia al valor de Prescaler.
-	TIM_TimeBaseStructure.TIM_Period = 3.215; // 321.5uS (10e3 = 1 seg --> 3.215 = 321.5uS) de periodo.
+	TIM_TimeBaseStructure.TIM_Period = 10; // 321.5uS (10e3 = 1 seg --> 3.215 = 321.5uS) de periodo.
 	TIM_TimeBaseStructure.TIM_Prescaler = PrescalerValue;
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
@@ -165,7 +164,7 @@ void TIM5_Config(void){
 
 	/* Se habilitan las interrupciones globales para el timer X*/
 	NVIC_InitStructure.NVIC_IRQChannel = TIM5_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 10;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
@@ -276,7 +275,10 @@ void TIM5_IRQHandler (void)  {
 	{
 		TIM_ClearITPendingBit(TIM5, TIM_IT_CC1); // Se limpia la bandera de interrupcion.
 
-		GPIO_ToggleBits(GPIOD, L_AZUL); // Se cambia el estado del led azul.
+		if (TimingDelay != 0)
+		{
+			TimingDelay--;
+		}
 
 
 	}
