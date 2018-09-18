@@ -32,13 +32,29 @@ struct{
 	char temperatura_string[15];
 	double temperatura;
 	double humedad;
-}dht;
+}dht_interior;
 
-void DHT11_start(void);
-void check_response(void);
-uint8_t read_data (void);
+struct{
+	uint32_t contador;
+	uint32_t contador_desconectado;
+	uint8_t flag;
+	uint8_t check;
+	uint32_t timeout;
+	uint8_t flag_timeout;
+	uint8_t estado;
+	char temperatura_string[15];
+	double temperatura;
+	double humedad;
+}dht_exterior;
+
+void DHT11_start_interior(void);
+//void set_gpio_output_interior(void);
+void set_gpio_input_interior(void);
+void check_response_interior(void);
+uint8_t read_data_interior(void);
+void leer_dht_interior();
+
 void delay(uint32_t tiempo);
-void leer_dht();
 void TIM5_Start(void);
 
 void delay(uint32_t tiempo){
@@ -52,8 +68,9 @@ void delay(uint32_t tiempo){
 
 }
 
+// DHT INTERIOR
 
-void set_gpio_output (void)
+void set_gpio_output_interior(void)
 {
 	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
 
@@ -72,7 +89,7 @@ void set_gpio_output (void)
 	GPIO_Init(GPIOA,&GPIO_Init_Pins); // Carga de la estrucura de datos.
 }
 
-void set_gpio_input (void)
+void set_gpio_input_interior (void)
 {
 	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
 
@@ -91,35 +108,35 @@ void set_gpio_input (void)
 	GPIO_Init(GPIOA,&GPIO_Init_Pins); // Carga de la estrucura de datos.
 }
 
-void DHT11_start (void)
+void DHT11_start_interior (void)
 {
-	set_gpio_output ();  // set the pin as output
+	set_gpio_output_interior();  // set the pin as output
 	GPIO_WriteBit(GPIOA,GPIO_Pin_1,0); // pull the pin low
 	delay(18000);   // wait for 18ms
-	set_gpio_input ();   // set as input
+	set_gpio_input_interior();   // set as input
 }
 
-void check_response (void)
+void check_response_interior (void)
 {
 	delay(40);
 	if (!(GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1)))
 	{
 		delay(80);
-		if ((GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1))) dht.check = 1;
+		if ((GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1))) dht_interior.check = 1;
 	}
 
-	dht.timeout = TIME_TIMEOUT;
-	while (GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1) && !dht.flag_timeout);   // wait for the pin to go low
+	dht_interior.timeout = TIME_TIMEOUT;
+	while (GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1) && !dht_interior.flag_timeout);   // wait for the pin to go low
 }
 
-uint8_t read_data (void)
+uint8_t read_data_interior (void)
 {
 	uint8_t i,j;
 	for (j=0;j<8;j++)
 	{
-		dht.timeout = TIME_TIMEOUT;
-		while (!(GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1)) && !dht.flag_timeout);   // wait for the pin to go high
-		if(dht.flag_timeout)  //Si se vencio el timeout vuelve al main.
+		dht_interior.timeout = TIME_TIMEOUT;
+		while (!(GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1)) && !dht_interior.flag_timeout);   // wait for the pin to go high
+		if(dht_interior.flag_timeout)  //Si se vencio el timeout vuelve al main.
 					return 0;
 
 		delay(40);   // wait for 40 us
@@ -130,63 +147,63 @@ uint8_t read_data (void)
 		}
 		else i|= (1<<(7-j));  // if the pin is high, write 1
 
-		dht.timeout = TIME_TIMEOUT; // set the timeout
-		while ((GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1)) && !dht.flag_timeout);  // wait for the pin to go low or the timeout dead.
-		if(dht.flag_timeout)  //Si se vencio el timeout vuelve al main.
+		dht_interior.timeout = TIME_TIMEOUT; // set the timeout
+		while ((GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1)) && !dht_interior.flag_timeout);  // wait for the pin to go low or the timeout dead.
+		if(dht_interior.flag_timeout)  //Si se vencio el timeout vuelve al main.
 					return 0;
 	}
 	return i;
 }
 
-void leer_dht(){
+void leer_dht_interior(){
 
 	uint8_t Rh_byte1, Rh_byte2, Temp_byte1, Temp_byte2;
 	uint16_t sum;
 	char aux[5] = "";
 
 	TIM_Cmd(TIM5, ENABLE); // Habilita el timer 5 para la lectura.
-	DHT11_start ();
+	DHT11_start_interior ();
 
 
-	check_response ();
+	check_response_interior ();
 	//	GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
-	if(dht.flag_timeout){ //Si se vencio el timeout vuelve al main.
-		dht.estado = STATE_DHT_TIMEOUT;
+	if(dht_interior.flag_timeout){ //Si se vencio el timeout vuelve al main.
+		dht_interior.estado = STATE_DHT_TIMEOUT;
 		TIM_Cmd(TIM5, DISABLE);
 		return;
 	}
 
-	Rh_byte1 = read_data ();
-	if(dht.flag_timeout){ //Si se vencio el timeout vuelve al main.
-		dht.estado = STATE_DHT_TIMEOUT;
+	Rh_byte1 = read_data_interior ();
+	if(dht_interior.flag_timeout){ //Si se vencio el timeout vuelve al main.
+		dht_interior.estado = STATE_DHT_TIMEOUT;
 		TIM_Cmd(TIM5, DISABLE);
 		return;
 	}
 
-	Rh_byte2 = read_data ();
-	if(dht.flag_timeout){ //Si se vencio el timeout vuelve al main.
-		dht.estado = STATE_DHT_TIMEOUT;
+	Rh_byte2 = read_data_interior ();
+	if(dht_interior.flag_timeout){ //Si se vencio el timeout vuelve al main.
+		dht_interior.estado = STATE_DHT_TIMEOUT;
 		TIM_Cmd(TIM5, DISABLE);
 		return;
 	}
 
-	Temp_byte1 = read_data ();
-	if(dht.flag_timeout){ //Si se vencio el timeout vuelve al main.
-		dht.estado = STATE_DHT_TIMEOUT;
+	Temp_byte1 = read_data_interior ();
+	if(dht_interior.flag_timeout){ //Si se vencio el timeout vuelve al main.
+		dht_interior.estado = STATE_DHT_TIMEOUT;
 		TIM_Cmd(TIM5, DISABLE);
 		return;
 	}
 
-	Temp_byte2 = read_data ();
-	if(dht.flag_timeout){ //Si se vencio el timeout vuelve al main.
-		dht.estado = STATE_DHT_TIMEOUT;
+	Temp_byte2 = read_data_interior ();
+	if(dht_interior.flag_timeout){ //Si se vencio el timeout vuelve al main.
+		dht_interior.estado = STATE_DHT_TIMEOUT;
 		TIM_Cmd(TIM5, DISABLE);
 		return;
 	}
 
-	sum = read_data();
-	if(dht.flag_timeout){ //Si se vencio el timeout vuelve al main.
-		dht.estado = STATE_DHT_TIMEOUT;
+	sum = read_data_interior();
+	if(dht_interior.flag_timeout){ //Si se vencio el timeout vuelve al main.
+		dht_interior.estado = STATE_DHT_TIMEOUT;
 		TIM_Cmd(TIM5, DISABLE);
 		return;
 	}
@@ -194,15 +211,170 @@ void leer_dht(){
 	if (sum == (Rh_byte1+Rh_byte2+Temp_byte1+Temp_byte2))    // if the data is correct
 	{
 		sprintf(aux,"%d.%d",Temp_byte1,Temp_byte2); // Se crea una cadena con la temperatura.
-		strcpy(dht.temperatura_string,aux); // Se guarda la temperatura en la estructura del dht.
-		dht.estado = STATE_DHT_CHECKSUM_GOOD; // Se cambia el estado del sensor.
+		strcpy(dht_interior.temperatura_string,aux); // Se guarda la temperatura en la estructura del dht.
+		dht_interior.estado = STATE_DHT_CHECKSUM_GOOD; // Se cambia el estado del sensor.
 	}
 	else
-		dht.estado = STATE_DHT_CHECKSUM_BAD; // Se cambia el estado del sensor.
+		dht_interior.estado = STATE_DHT_CHECKSUM_BAD; // Se cambia el estado del sensor.
 
 	TIM_Cmd(TIM5, DISABLE);
 
 }
+
+// DHT Exterior.
+
+void set_gpio_output_exterior(void)
+{
+	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
+
+	//
+	//Inicializacion del pin.
+	//
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
+
+	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_9;
+	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
+	GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
+	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
+	GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
+
+	GPIO_Init(GPIOE,&GPIO_Init_Pins); // Carga de la estrucura de datos.
+}
+
+void set_gpio_input_exterior (void)
+{
+	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
+
+	//
+	//Inicializacion del pin.
+	//
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
+
+	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_9;
+	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_IN;
+	GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
+	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP;
+	GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
+
+	GPIO_Init(GPIOE,&GPIO_Init_Pins); // Carga de la estrucura de datos.
+}
+
+void DHT11_start_exterior (void)
+{
+	set_gpio_output_exterior();  // set the pin as output
+	GPIO_WriteBit(GPIOE,GPIO_Pin_9,0); // pull the pin low
+	delay(18000);   // wait for 18ms
+	set_gpio_input_exterior();   // set as input
+}
+
+void check_response_exterior (void)
+{
+	delay(40);
+	if (!(GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_9)))
+	{
+		delay(80);
+		if ((GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_9))) dht_exterior.check = 1;
+	}
+
+	dht_exterior.timeout = TIME_TIMEOUT;
+	while (GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_9) && !dht_exterior.flag_timeout);   // wait for the pin to go low
+}
+
+uint8_t read_data_exterior (void)
+{
+	uint8_t i,j;
+	for (j=0;j<8;j++)
+	{
+		dht_exterior.timeout = TIME_TIMEOUT;
+		while (!(GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_9)) && !dht_exterior.flag_timeout);   // wait for the pin to go high
+		if(dht_exterior.flag_timeout)  //Si se vencio el timeout vuelve al main.
+			return 0;
+
+		delay(40);   // wait for 40 us
+
+		if ((GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_9)) == 0)   // if the pin is low
+		{
+			i&= ~(1<<(7-j));   // write 0
+		}
+		else i|= (1<<(7-j));  // if the pin is high, write 1
+
+		dht_exterior.timeout = TIME_TIMEOUT; // set the timeout
+		while ((GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_9)) && !dht_exterior.flag_timeout);  // wait for the pin to go low or the timeout dead.
+		if(dht_exterior.flag_timeout)  //Si se vencio el timeout vuelve al main.
+			return 0;
+	}
+	return i;
+}
+
+void leer_dht_exterior(){
+
+	uint8_t Rh_byte1, Rh_byte2, Temp_byte1, Temp_byte2;
+	uint16_t sum;
+	char aux[5] = "";
+
+	TIM_Cmd(TIM5, ENABLE); // Habilita el timer 5 para la lectura.
+	DHT11_start_exterior ();
+
+
+	check_response_exterior ();
+	//	GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
+	if(dht_exterior.flag_timeout){ //Si se vencio el timeout vuelve al main.
+		dht_exterior.estado = STATE_DHT_TIMEOUT;
+		TIM_Cmd(TIM5, DISABLE);
+		return;
+	}
+
+	Rh_byte1 = read_data_exterior ();
+	if(dht_exterior.flag_timeout){ //Si se vencio el timeout vuelve al main.
+		dht_exterior.estado = STATE_DHT_TIMEOUT;
+		TIM_Cmd(TIM5, DISABLE);
+		return;
+	}
+
+	Rh_byte2 = read_data_exterior ();
+	if(dht_exterior.flag_timeout){ //Si se vencio el timeout vuelve al main.
+		dht_exterior.estado = STATE_DHT_TIMEOUT;
+		TIM_Cmd(TIM5, DISABLE);
+		return;
+	}
+
+	Temp_byte1 = read_data_exterior ();
+	if(dht_exterior.flag_timeout){ //Si se vencio el timeout vuelve al main.
+		dht_exterior.estado = STATE_DHT_TIMEOUT;
+		TIM_Cmd(TIM5, DISABLE);
+		return;
+	}
+
+	Temp_byte2 = read_data_exterior ();
+	if(dht_exterior.flag_timeout){ //Si se vencio el timeout vuelve al main.
+		dht_exterior.estado = STATE_DHT_TIMEOUT;
+		TIM_Cmd(TIM5, DISABLE);
+		return;
+	}
+
+	sum = read_data_exterior();
+	if(dht_exterior.flag_timeout){ //Si se vencio el timeout vuelve al main.
+		dht_exterior.estado = STATE_DHT_TIMEOUT;
+		TIM_Cmd(TIM5, DISABLE);
+		return;
+	}
+
+	if (sum == (Rh_byte1+Rh_byte2+Temp_byte1+Temp_byte2))    // if the data is correct
+	{
+		sprintf(aux,"%d.%d",Temp_byte1,Temp_byte2); // Se crea una cadena con la temperatura.
+		strcpy(dht_exterior.temperatura_string,aux); // Se guarda la temperatura en la estructura del dht.
+		dht_exterior.estado = STATE_DHT_CHECKSUM_GOOD; // Se cambia el estado del sensor.
+	}
+	else
+		dht_exterior.estado = STATE_DHT_CHECKSUM_BAD; // Se cambia el estado del sensor.
+
+	TIM_Cmd(TIM5, DISABLE);
+
+}
+
+
 
 /////////////////////////// TIMER 5/////////////////////////////
 void TIM5_Init(void){

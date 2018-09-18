@@ -57,24 +57,44 @@ void task_scheduler(void){
 	 */
 
 	// Rutina DHT
-	if(dht.flag){
-		if(dht.timeout >= 1){
-			dht.timeout--;
+	if(dht_interior.flag){
+		if(dht_interior.timeout >= 1){
+			dht_interior.timeout--;
 		}
 
-		if(dht.timeout <= 0){
-			dht.flag_timeout = 1;
+		if(dht_interior.timeout <= 0){
+			dht_interior.flag_timeout = 1;
 		}
 	}
 
-	if(dht.contador >= 1){
-		dht.contador--;
+	if(dht_interior.contador >= 1){
+		dht_interior.contador--;
 	}
 	else{
-		dht.flag = 1;
-		dht.contador = 2000;
-		dht.flag_timeout = 0;
-		dht.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
+		dht_interior.flag = 1;
+		dht_interior.contador = 2000;
+		dht_interior.flag_timeout = 0;
+		dht_interior.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
+	}
+
+	if(dht_exterior.flag){
+		if(dht_exterior.timeout >= 1){
+			dht_exterior.timeout--;
+		}
+
+		if(dht_exterior.timeout <= 0){
+			dht_exterior.flag_timeout = 1;
+		}
+	}
+
+	if(dht_exterior.contador >= 1){
+		dht_exterior.contador--;
+	}
+	else{
+		dht_exterior.flag = 1;
+		dht_exterior.contador = 2000;
+		dht_exterior.flag_timeout = 0;
+		dht_exterior.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
 	}
 
 	// Rutina LDR
@@ -135,9 +155,14 @@ void inicializar_leds(){
 
 void task_manager(void){
 	// Chequeo dht.
-	if(dht.flag){
-		leer_dht();
-		dht.flag = 0;
+	if(dht_interior.flag){
+		leer_dht_interior();
+		dht_interior.flag = 0;
+	}
+
+	if(dht_exterior.flag){
+		leer_dht_exterior();
+		dht_exterior.flag = 0;
 	}
 
 	//Chequeo LED.
@@ -161,7 +186,7 @@ void task_manager(void){
 	if(display.flag){
 		char buffer[10];
 
-		if(display.estado <2){
+		if(display.estado <3){
 			display.estado++;
 		}
 		else{
@@ -184,31 +209,62 @@ void task_manager(void){
 		};break;
 
 		case 2:{
-			switch(dht.estado){
+			switch(dht_exterior.estado){
 			case STATE_DHT_CHECKSUM_GOOD:{
 				UB_LCD_2x16_String(0,0,"Temp:       "); // Texto en la linea 1
-				UB_LCD_2x16_String(12,0,dht.temperatura_string); // Texto en la linea 1
-				UB_LCD_2x16_String(0,1,"                "); // Texto en la linea 1
+				UB_LCD_2x16_String(12,0,dht_exterior.temperatura_string); // Texto en la linea 1
+				UB_LCD_2x16_String(0,1,"Exterior    "); // Texto en la linea 1
 				display.flag = 0;
 			};break;
 			case STATE_DHT_CHECKSUM_BAD:{
 				UB_LCD_2x16_String(0,0,"Error de CHEcK  "); // Texto en la linea 1
-				UB_LCD_2x16_String(0,1,"                "); // Texto en la linea 1
+				UB_LCD_2x16_String(0,1,"Exterior        "); // Texto en la linea 1
 				display.flag = 0;
 			};break;
 			case STATE_DHT_DESCONECTADO:{
 				UB_LCD_2x16_String(0,0,"DHT desconectado"); // Texto en la linea 1
-				UB_LCD_2x16_String(0,1,"                "); // Texto en la linea 1
+				UB_LCD_2x16_String(0,1,"Exterior        "); // Texto en la linea 1
 				display.flag = 0;
 			};break;
 			case STATE_DHT_TIMEOUT:{
 				UB_LCD_2x16_String(0,0,"DHT Timeout     "); // Texto en la linea 1
-				UB_LCD_2x16_String(0,1,"                "); // Texto en la linea 1
+				UB_LCD_2x16_String(0,1,"Exterior        "); // Texto en la linea 1
 				display.flag = 0;
 			};break;
 			default:{
 				UB_LCD_2x16_String(0,0,"Err  desconocido"); // Texto en la linea 1
-				UB_LCD_2x16_String(0,1,"                "); // Texto en la linea
+				UB_LCD_2x16_String(0,1,"Exterior        "); // Texto en la linea
+				display.flag = 0;
+			};break;}
+
+		};break;
+
+		case 3:{
+			switch(dht_interior.estado){
+			case STATE_DHT_CHECKSUM_GOOD:{
+				UB_LCD_2x16_String(0,0,"Temp:       "); // Texto en la linea 1
+				UB_LCD_2x16_String(12,0,dht_interior.temperatura_string); // Texto en la linea 1
+				UB_LCD_2x16_String(0,1,"Interior    "); // Texto en la linea 1
+				display.flag = 0;
+			};break;
+			case STATE_DHT_CHECKSUM_BAD:{
+				UB_LCD_2x16_String(0,0,"Error de CHEcK  "); // Texto en la linea 1
+				UB_LCD_2x16_String(0,1,"Interior        "); // Texto en la linea 1
+				display.flag = 0;
+			};break;
+			case STATE_DHT_DESCONECTADO:{
+				UB_LCD_2x16_String(0,0,"DHT desconectado"); // Texto en la linea 1
+				UB_LCD_2x16_String(0,1,"Interior        "); // Texto en la linea 1
+				display.flag = 0;
+			};break;
+			case STATE_DHT_TIMEOUT:{
+				UB_LCD_2x16_String(0,0,"DHT Timeout     "); // Texto en la linea 1
+				UB_LCD_2x16_String(0,1,"Interior        "); // Texto en la linea 1
+				display.flag = 0;
+			};break;
+			default:{
+				UB_LCD_2x16_String(0,0,"Err  desconocido"); // Texto en la linea 1
+				UB_LCD_2x16_String(0,1,"Interior        "); // Texto en la linea
 				display.flag = 0;
 			};break;}
 		};break;
@@ -217,7 +273,7 @@ void task_manager(void){
 			UB_LCD_2x16_String(0,0,"Display-fail");
 			UB_LCD_2x16_String(0,1,"                ");
 		};break;
-	}
+		}
 		display.flag = 0;
 
 	}
