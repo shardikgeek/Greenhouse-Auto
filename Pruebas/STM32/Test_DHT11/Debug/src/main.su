@@ -1,0 +1,16 @@
+core_cm4.h:1535:22:NVIC_SetPriority	16	static
+core_cm4.h:1662:26:SysTick_Config	16	static
+dht.h:40:6:delay	16	static
+dht.h:52:6:set_gpio_output	16	static
+dht.h:71:6:set_gpio_input	16	static
+dht.h:90:6:DHT11_start	8	static
+dht.h:98:6:check_response	8	static
+dht.h:111:9:read_data	16	static
+dht.h:137:6:leer_dht	24	static
+dht.h:204:6:TIM5_Init	32	static
+dht.h:230:6:TIM5_Config	16	static
+dht.h:248:6:TIM5_Start	8	static
+dht.h:258:6:TIM5_IRQHandler	8	static
+main.c:22:5:main	16	static
+main.c:85:6:TimingDelay_Decrement	4	static
+main.c:131:6:inicializar_leds	16	static
