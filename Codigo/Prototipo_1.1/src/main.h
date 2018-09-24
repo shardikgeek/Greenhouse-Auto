@@ -14,7 +14,7 @@
 #include "dht.h"
 #include "adc.h"
 #include "stm32_ub_lcd_2x16.h" // Inclusion de la libreria para manejar el LCD
-
+#include <rtc.h>
 
 
 // Variables globales.
@@ -77,6 +77,9 @@ struct{
 			unsigned int fan_encendido : 1;
 		}flag;
 }control;
+
+TM_RTC_AlarmTime_t AlarmTime;
+TM_RTC_t datatime;
 
 // Prototipos de funciones.
 void inicializar_leds(void);

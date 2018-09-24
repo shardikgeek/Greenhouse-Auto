@@ -13,6 +13,9 @@ int main(void){
 
 	cargar_datos(); // Se cargan los datos por default.
 
+	TM_RTC_Init(TM_RTC_ClockSource_External);
+	TM_RTC_Interrupts(TM_RTC_Int_1s);
+
 	SystemInit(); // Activa el systick.
 	SysTick_Config(SystemCoreClock / 1e3); // Configuracion del tiempo de la interrupcion (cada 1us).
 
@@ -293,8 +296,10 @@ void display_task(){
 			sprintf(buffer,"%d   ",ldr.adc_cuentas);
 			UB_LCD_2x16_String(0,0,"LDR:       ");
 			UB_LCD_2x16_String(12,0,buffer);
-			UB_LCD_2x16_String(0,1,"       ");
-			sprintf(buffer,"%d:%d:%d",tiempo.hora,tiempo.minutos,tiempo.segundos);
+			UB_LCD_2x16_String(0,1,"        ");
+
+			TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN);
+			sprintf(buffer,"%d:%d:%d",datatime.hours,datatime.minutes,datatime.seconds);
 			UB_LCD_2x16_String(8,1,buffer); // Texto en la linea 1
 		};break;
 
@@ -302,9 +307,6 @@ void display_task(){
 			sprintf(buffer,"%d   ",yl.adc_cuentas);
 			UB_LCD_2x16_String(0,0,"YL-69:     ");
 			UB_LCD_2x16_String(12,0,buffer);
-			UB_LCD_2x16_String(0,1,"       ");
-			sprintf(buffer,"%d:%d:%d",tiempo.hora,tiempo.minutos,tiempo.segundos);
-			UB_LCD_2x16_String(8,1,buffer); // Texto en la linea 1
 		};break;
 
 		case 2:{
@@ -313,8 +315,6 @@ void display_task(){
 				UB_LCD_2x16_String(0,0,"Temp:       "); // Texto en la linea 1
 				UB_LCD_2x16_String(12,0,dht_exterior.temperatura_string); // Texto en la linea 1
 				UB_LCD_2x16_String(0,1,"Exter  "); // Texto en la linea 1
-				sprintf(buffer,"%d:%d:%d",tiempo.hora,tiempo.minutos,tiempo.segundos);
-				UB_LCD_2x16_String(8,1,buffer); // Texto en la linea 1
 				display.flag = 0;
 			};break;
 			case STATE_DHT_CHECKSUM_BAD:{
@@ -346,8 +346,6 @@ void display_task(){
 				UB_LCD_2x16_String(0,0,"Temp:       "); // Texto en la linea 1
 				UB_LCD_2x16_String(12,0,dht_interior.temperatura_string); // Texto en la linea 1
 				UB_LCD_2x16_String(0,1,"Inter  "); // Texto en la linea 1
-				sprintf(buffer,"%d:%d:%d",tiempo.hora,tiempo.minutos,tiempo.segundos);
-				UB_LCD_2x16_String(8,1,buffer); // Texto en la linea 1
 				display.flag = 0;
 			};break;
 			case STATE_DHT_CHECKSUM_BAD:{
@@ -381,8 +379,6 @@ void display_task(){
 				sprintf(aux,"Temp:%d         ",diferencia);
 				UB_LCD_2x16_String(0,0,"Diferencia      "); // Texto en la linea 1
 				UB_LCD_2x16_String(0,1,aux); // Texto en la linea 1
-				sprintf(buffer,"%d:%d:%d",tiempo.hora,tiempo.minutos,tiempo.segundos);
-				UB_LCD_2x16_String(8,1,buffer); // Texto en la linea 1
 				display.flag = 0;
 			}
 			else{
@@ -394,9 +390,7 @@ void display_task(){
 
 		case 5:{
 			UB_LCD_2x16_String(0,0,"Hora           "); // Texto en la linea 1
-			sprintf(buffer,"%d:%d:%d",tiempo.hora,tiempo.minutos,tiempo.segundos);
 			UB_LCD_2x16_String(0,1,"       ");
-			UB_LCD_2x16_String(8,1,buffer); // Texto en la linea 1
 		};break;
 
 		default:{
