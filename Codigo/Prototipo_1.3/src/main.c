@@ -310,7 +310,7 @@ void display_task(){
 			case STATE_DHT_CHECKSUM_GOOD:{
 				UB_LCD_2x16_String(0,0,"Temp:       "); // Texto en la linea 1
 				UB_LCD_2x16_String(12,0,dht_interior.temperatura_string); // Texto en la linea 1
-				UB_LCD_2x16_String(0,1,"Inter  "); // Texto en la linea 1
+				UB_LCD_2x16_String(0,1,"Inter       "); // Texto en la linea 1
 				display.flag = 0;
 			};break;
 			case STATE_DHT_CHECKSUM_BAD:{

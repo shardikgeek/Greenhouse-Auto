@@ -7,13 +7,13 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         00004160  08000188  08000188  00010188  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       00000198  080042e8  080042e8  000142e8  2**2
+  2 .rodata       000001a0  080042e8  080042e8  000142e8  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .init_array   00000004  08004480  08004480  00014480  2**2
+  3 .init_array   00000004  08004488  08004488  00014488  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  4 .fini_array   00000004  08004484  08004484  00014484  2**2
+  4 .fini_array   00000004  0800448c  0800448c  0001448c  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  5 .data         00000094  20000000  08004488  00020000  2**2
+  5 .data         00000094  20000000  08004490  00020000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
   6 .ccmram       00000000  10000000  10000000  00020094  2**0
                   CONTENTS
@@ -23,23 +23,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
   9 .ARM.attributes 00000030  00000000  00000000  00020094  2**0
                   CONTENTS, READONLY
- 10 .debug_info   0000ad36  00000000  00000000  000200c4  2**0
+ 10 .debug_info   0000ad3d  00000000  00000000  000200c4  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_abbrev 00001bdd  00000000  00000000  0002adfa  2**0
+ 11 .debug_abbrev 00001bdd  00000000  00000000  0002ae01  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_aranges 00000cc8  00000000  00000000  0002c9d8  2**3
+ 12 .debug_aranges 00000cc8  00000000  00000000  0002c9e0  2**3
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_ranges 00000bd0  00000000  00000000  0002d6a0  2**3
+ 13 .debug_ranges 00000bd0  00000000  00000000  0002d6a8  2**3
                   CONTENTS, READONLY, DEBUGGING
- 14 .debug_line   00004562  00000000  00000000  0002e270  2**0
+ 14 .debug_line   00004562  00000000  00000000  0002e278  2**0
                   CONTENTS, READONLY, DEBUGGING
- 15 .debug_str    0000413d  00000000  00000000  000327d2  2**0
+ 15 .debug_str    00004144  00000000  00000000  000327da  2**0
                   CONTENTS, READONLY, DEBUGGING
- 16 .comment      0000007c  00000000  00000000  0003690f  2**0
+ 16 .comment      0000007c  00000000  00000000  0003691e  2**0
                   CONTENTS, READONLY
- 17 .debug_frame  000038f8  00000000  00000000  0003698c  2**2
+ 17 .debug_frame  000038f8  00000000  00000000  0003699c  2**2
                   CONTENTS, READONLY, DEBUGGING
- 18 .stabstr      0000003f  00000000  00000000  0003a284  2**0
+ 18 .stabstr      0000003f  00000000  00000000  0003a294  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -5196,8 +5196,8 @@ void set_gpio_output_interior(void)
  80020ec:	2001      	movs	r0, #1
  80020ee:	f7ff f953 	bl	8001398 <RCC_AHB1PeriphClockCmd>
 
-	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_1;
- 80020f2:	2302      	movs	r3, #2
+	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_7;
+ 80020f2:	2380      	movs	r3, #128	; 0x80
  80020f4:	603b      	str	r3, [r7, #0]
 	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
  80020f6:	2301      	movs	r3, #1
@@ -5212,7 +5212,7 @@ void set_gpio_output_interior(void)
  8002102:	2300      	movs	r3, #0
  8002104:	71fb      	strb	r3, [r7, #7]
 
-	GPIO_Init(GPIOA,&GPIO_Init_Pins); // Carga de la estrucura de datos.
+	GPIO_Init(GPIOE,&GPIO_Init_Pins); // Carga de la estrucura de datos.
  8002106:	463b      	mov	r3, r7
  8002108:	4619      	mov	r1, r3
  800210a:	4803      	ldr	r0, [pc, #12]	; (8002118 <set_gpio_output_interior+0x34>)
@@ -5222,7 +5222,7 @@ void set_gpio_output_interior(void)
  8002112:	3708      	adds	r7, #8
  8002114:	46bd      	mov	sp, r7
  8002116:	bd80      	pop	{r7, pc}
- 8002118:	40020000 	.word	0x40020000
+ 8002118:	40021000 	.word	0x40021000
 
 0800211c <set_gpio_input_interior>:
 
@@ -5236,13 +5236,13 @@ void set_gpio_input_interior (void)
 	//Inicializacion del pin.
 	//
 
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
  8002122:	2101      	movs	r1, #1
- 8002124:	2001      	movs	r0, #1
+ 8002124:	2010      	movs	r0, #16
  8002126:	f7ff f937 	bl	8001398 <RCC_AHB1PeriphClockCmd>
 
-	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_1;
- 800212a:	2302      	movs	r3, #2
+	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_7;
+ 800212a:	2380      	movs	r3, #128	; 0x80
  800212c:	603b      	str	r3, [r7, #0]
 	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_IN;
  800212e:	2300      	movs	r3, #0
@@ -5257,7 +5257,7 @@ void set_gpio_input_interior (void)
  800213a:	2300      	movs	r3, #0
  800213c:	71fb      	strb	r3, [r7, #7]
 
-	GPIO_Init(GPIOA,&GPIO_Init_Pins); // Carga de la estrucura de datos.
+	GPIO_Init(GPIOE,&GPIO_Init_Pins); // Carga de la estrucura de datos.
  800213e:	463b      	mov	r3, r7
  8002140:	4619      	mov	r1, r3
  8002142:	4803      	ldr	r0, [pc, #12]	; (8002150 <set_gpio_input_interior+0x34>)
@@ -5267,7 +5267,7 @@ void set_gpio_input_interior (void)
  800214a:	3708      	adds	r7, #8
  800214c:	46bd      	mov	sp, r7
  800214e:	bd80      	pop	{r7, pc}
- 8002150:	40020000 	.word	0x40020000
+ 8002150:	40021000 	.word	0x40021000
 
 08002154 <DHT11_start_interior>:
 
@@ -5277,9 +5277,9 @@ void DHT11_start_interior (void)
  8002156:	af00      	add	r7, sp, #0
 	set_gpio_output_interior();  // set the pin as output
  8002158:	f7ff ffc4 	bl	80020e4 <set_gpio_output_interior>
-	GPIO_WriteBit(GPIOA,GPIO_Pin_1,0); // pull the pin low
+	GPIO_WriteBit(GPIOE,GPIO_Pin_7,0); // pull the pin low
  800215c:	2200      	movs	r2, #0
- 800215e:	2102      	movs	r1, #2
+ 800215e:	2180      	movs	r1, #128	; 0x80
  8002160:	4805      	ldr	r0, [pc, #20]	; (8002178 <DHT11_start_interior+0x24>)
  8002162:	f7ff f86f 	bl	8001244 <GPIO_WriteBit>
 	delay(18000);   // wait for 18ms
@@ -5291,7 +5291,7 @@ void DHT11_start_interior (void)
  8002172:	bf00      	nop
  8002174:	bd80      	pop	{r7, pc}
  8002176:	bf00      	nop
- 8002178:	40020000 	.word	0x40020000
+ 8002178:	40021000 	.word	0x40021000
 
 0800217c <check_response_interior>:
 
@@ -5302,8 +5302,8 @@ void check_response_interior (void)
 	delay(40);
  8002180:	2028      	movs	r0, #40	; 0x28
  8002182:	f7ff ff9b 	bl	80020bc <delay>
-	if (!(GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1)))
- 8002186:	2102      	movs	r1, #2
+	if (!(GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_7)))
+ 8002186:	2180      	movs	r1, #128	; 0x80
  8002188:	4811      	ldr	r0, [pc, #68]	; (80021d0 <check_response_interior+0x54>)
  800218a:	f7ff f823 	bl	80011d4 <GPIO_ReadInputDataBit>
  800218e:	4603      	mov	r3, r0
@@ -5313,8 +5313,8 @@ void check_response_interior (void)
 		delay(80);
  8002194:	2050      	movs	r0, #80	; 0x50
  8002196:	f7ff ff91 	bl	80020bc <delay>
-		if ((GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1))) dht_interior.check = 1;
- 800219a:	2102      	movs	r1, #2
+		if ((GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_7))) dht_interior.check = 1;
+ 800219a:	2180      	movs	r1, #128	; 0x80
  800219c:	480c      	ldr	r0, [pc, #48]	; (80021d0 <check_response_interior+0x54>)
  800219e:	f7ff f819 	bl	80011d4 <GPIO_ReadInputDataBit>
  80021a2:	4603      	mov	r3, r0
@@ -5329,9 +5329,9 @@ void check_response_interior (void)
  80021ae:	4b09      	ldr	r3, [pc, #36]	; (80021d4 <check_response_interior+0x58>)
  80021b0:	220a      	movs	r2, #10
  80021b2:	60da      	str	r2, [r3, #12]
-	while (GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1) && !dht_interior.flag_timeout);   // wait for the pin to go low
+	while (GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_7) && !dht_interior.flag_timeout);   // wait for the pin to go low
  80021b4:	bf00      	nop
- 80021b6:	2102      	movs	r1, #2
+ 80021b6:	2180      	movs	r1, #128	; 0x80
  80021b8:	4805      	ldr	r0, [pc, #20]	; (80021d0 <check_response_interior+0x54>)
  80021ba:	f7ff f80b 	bl	80011d4 <GPIO_ReadInputDataBit>
  80021be:	4603      	mov	r3, r0
@@ -5344,7 +5344,7 @@ void check_response_interior (void)
 }
  80021cc:	bf00      	nop
  80021ce:	bd80      	pop	{r7, pc}
- 80021d0:	40020000 	.word	0x40020000
+ 80021d0:	40021000 	.word	0x40021000
  80021d4:	200001a8 	.word	0x200001a8
 
 080021d8 <read_data_interior>:
@@ -5364,9 +5364,9 @@ uint8_t read_data_interior (void)
  80021e4:	4b2c      	ldr	r3, [pc, #176]	; (8002298 <read_data_interior+0xc0>)
  80021e6:	220a      	movs	r2, #10
  80021e8:	60da      	str	r2, [r3, #12]
-		while (!(GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1)) && !dht_interior.flag_timeout);   // wait for the pin to go high
+		while (!(GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_7)) && !dht_interior.flag_timeout);   // wait for the pin to go high
  80021ea:	bf00      	nop
- 80021ec:	2102      	movs	r1, #2
+ 80021ec:	2180      	movs	r1, #128	; 0x80
  80021ee:	482b      	ldr	r0, [pc, #172]	; (800229c <read_data_interior+0xc4>)
  80021f0:	f7fe fff0 	bl	80011d4 <GPIO_ReadInputDataBit>
  80021f4:	4603      	mov	r3, r0
@@ -5389,8 +5389,8 @@ uint8_t read_data_interior (void)
  800220e:	2028      	movs	r0, #40	; 0x28
  8002210:	f7ff ff54 	bl	80020bc <delay>
 
-		if ((GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1)) == 0)   // if the pin is low
- 8002214:	2102      	movs	r1, #2
+		if ((GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_7)) == 0)   // if the pin is low
+ 8002214:	2180      	movs	r1, #128	; 0x80
  8002216:	4821      	ldr	r0, [pc, #132]	; (800229c <read_data_interior+0xc4>)
  8002218:	f7fe ffdc 	bl	80011d4 <GPIO_ReadInputDataBit>
  800221c:	4603      	mov	r3, r0
@@ -5426,9 +5426,9 @@ uint8_t read_data_interior (void)
  8002258:	4b0f      	ldr	r3, [pc, #60]	; (8002298 <read_data_interior+0xc0>)
  800225a:	220a      	movs	r2, #10
  800225c:	60da      	str	r2, [r3, #12]
-		while ((GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1)) && !dht_interior.flag_timeout);  // wait for the pin to go low or the timeout dead.
+		while ((GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_7)) && !dht_interior.flag_timeout);  // wait for the pin to go low or the timeout dead.
  800225e:	bf00      	nop
- 8002260:	2102      	movs	r1, #2
+ 8002260:	2180      	movs	r1, #128	; 0x80
  8002262:	480e      	ldr	r0, [pc, #56]	; (800229c <read_data_interior+0xc4>)
  8002264:	f7fe ffb6 	bl	80011d4 <GPIO_ReadInputDataBit>
  8002268:	4603      	mov	r3, r0
@@ -5462,7 +5462,7 @@ uint8_t read_data_interior (void)
  8002294:	46bd      	mov	sp, r7
  8002296:	bd80      	pop	{r7, pc}
  8002298:	200001a8 	.word	0x200001a8
- 800229c:	40020000 	.word	0x40020000
+ 800229c:	40021000 	.word	0x40021000
 
 080022a0 <leer_dht_interior>:
 
@@ -7227,7 +7227,7 @@ void display_task(){
  8002d3c:	2100      	movs	r1, #0
  8002d3e:	200c      	movs	r0, #12
  8002d40:	f000 febe 	bl	8003ac0 <UB_LCD_2x16_String>
-				UB_LCD_2x16_String(0,1,"Inter  "); // Texto en la linea 1
+				UB_LCD_2x16_String(0,1,"Inter       "); // Texto en la linea 1
  8002d44:	4a64      	ldr	r2, [pc, #400]	; (8002ed8 <display_task+0x33c>)
  8002d46:	2101      	movs	r1, #1
  8002d48:	2000      	movs	r0, #0
@@ -7443,14 +7443,14 @@ void display_task(){
  8002ed0:	200001a8 	.word	0x200001a8
  8002ed4:	200001ba 	.word	0x200001ba
  8002ed8:	080043a0 	.word	0x080043a0
- 8002edc:	080043a8 	.word	0x080043a8
- 8002ee0:	080043bc 	.word	0x080043bc
- 8002ee4:	080043d0 	.word	0x080043d0
- 8002ee8:	080043e4 	.word	0x080043e4
- 8002eec:	080043f8 	.word	0x080043f8
- 8002ef0:	08004408 	.word	0x08004408
+ 8002edc:	080043b0 	.word	0x080043b0
+ 8002ee0:	080043c4 	.word	0x080043c4
+ 8002ee4:	080043d8 	.word	0x080043d8
+ 8002ee8:	080043ec 	.word	0x080043ec
+ 8002eec:	08004400 	.word	0x08004400
+ 8002ef0:	08004410 	.word	0x08004410
  8002ef4:	2000014c 	.word	0x2000014c
- 8002ef8:	08004410 	.word	0x08004410
+ 8002ef8:	08004418 	.word	0x08004418
 
 		case 6:{
 			// Se muestra el estado del cultivo.
@@ -7532,11 +7532,11 @@ void display_task(){
  8002f7a:	bf00      	nop
  8002f7c:	200000dc 	.word	0x200000dc
  8002f80:	20000130 	.word	0x20000130
- 8002f84:	0800441c 	.word	0x0800441c
- 8002f88:	08004430 	.word	0x08004430
- 8002f8c:	08004444 	.word	0x08004444
- 8002f90:	08004458 	.word	0x08004458
- 8002f94:	08004468 	.word	0x08004468
+ 8002f84:	08004424 	.word	0x08004424
+ 8002f88:	08004438 	.word	0x08004438
+ 8002f8c:	0800444c 	.word	0x0800444c
+ 8002f90:	08004460 	.word	0x08004460
+ 8002f94:	08004470 	.word	0x08004470
  8002f98:	200000cc 	.word	0x200000cc
 
 08002f9c <control_temp_task>:
@@ -7878,7 +7878,7 @@ void cargar_datos(){
  80031ec:	200000c0 	.word	0x200000c0
  80031f0:	200000dc 	.word	0x200000dc
  80031f4:	20000130 	.word	0x20000130
- 80031f8:	08004478 	.word	0x08004478
+ 80031f8:	08004480 	.word	0x08004480
 
 080031fc <TM_RTC_Init>:
 uint8_t TM_RTC_Months[2][12] = {
@@ -9290,7 +9290,7 @@ LoopFillZerobss:
   ldr   sp, =_estack    /* Atollic update: set stack pointer */
  8003a68:	20020000 	.word	0x20020000
   ldr  r3, =_sidata
- 8003a6c:	08004488 	.word	0x08004488
+ 8003a6c:	08004490 	.word	0x08004490
   ldr  r0, =_sdata
  8003a70:	20000000 	.word	0x20000000
   ldr  r3, =_edata
@@ -10722,10 +10722,10 @@ int siprintf(char *buf, const char *fmt, ...)
  80042aa:	4798      	blx	r3
  80042ac:	3501      	adds	r5, #1
  80042ae:	e7f2      	b.n	8004296 <__libc_init_array+0x1e>
- 80042b0:	08004480 	.word	0x08004480
- 80042b4:	08004480 	.word	0x08004480
- 80042b8:	08004480 	.word	0x08004480
- 80042bc:	08004484 	.word	0x08004484
+ 80042b0:	08004488 	.word	0x08004488
+ 80042b4:	08004488 	.word	0x08004488
+ 80042b8:	08004488 	.word	0x08004488
+ 80042bc:	0800448c 	.word	0x0800448c
 
 080042c0 <strcpy>:
  80042c0:	4603      	mov	r3, r0
