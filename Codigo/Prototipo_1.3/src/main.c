@@ -2,14 +2,21 @@
 
 int main(void){
 
-	/*	PP3 Ejercicio 1
-	 *	Se debe mostrar un cartel, en un display LCD.
+	/*	Prototipo 1.3
+	 *	Este programa es un prototipo del control de invernadero.
+	 *	Tiene RTC, una prueba de seguimiento de cultivos, lee dos sensores externos de temperatura y humedad
+	 *	y dos analogicos. 
 	 *
 	 */
 	UB_LCD_2x16_Init(); // Inicializacion del display.
 	inicializar_leds();
 	adc_inicializar();
 	TIM5_Start(); // Inicializa el timer del DHT.
+
+	RCC_Configuration(); 	// Habilitación de los timers.
+	USART3_Configuration();	// Configuración del USART.
+	NVIC_Config();          // Configuracion del NVIC.
+	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);
 
 	cargar_datos(); // Se cargan los datos por default.
 
@@ -26,14 +33,14 @@ int main(void){
 
 void task_scheduler(void){
 	/*	Funcion task_scheduler()
-	*	Maneja los contadores de las distintas tareas. Esta funcion es llamada por el systick cada 
-	*	vez que se vence su contador (1ms en este caso). 
-	*	Cuando el ontador de una tarea llega a su, fin se dispara una bandera de evento.
-	*	Este evento es chequeado luego de la interrupcion generada por el systick en el main().
-	*	Puede haber dos tipos de tareas, ciclicas o no ciclicas. En las ciclicas el
-	*	contador se resetea cada vez q una tarea finaliza, en las no ciclicas el contador
-	*	se setea solo cuando es necesario.
-	*/
+	 *	Maneja los contadores de las distintas tareas. Esta funcion es llamada por el systick cada
+	 *	vez que se vence su contador (1ms en este caso).
+	 *	Cuando el ontador de una tarea llega a su, fin se dispara una bandera de evento.
+	 *	Este evento es chequeado luego de la interrupcion generada por el systick en el main().
+	 *	Puede haber dos tipos de tareas, ciclicas o no ciclicas. En las ciclicas el
+	 *	contador se resetea cada vez q una tarea finaliza, en las no ciclicas el contador
+	 *	se setea solo cuando es necesario.
+	 */
 
 	// Rutina DHT
 	if(dht_interior.flag){
@@ -112,20 +119,20 @@ void task_scheduler(void){
 		display.contador = 2000;
 	}
 
-	// Rutina cultivo
-	if(cultivo.contador >= 1){
-		cultivo.contador--;
+	if(cultivo.contador_aux >= 1){
+		cultivo.contador_aux--;
 	}
 	else{
-		cultivo.flag.control_activo = 1;
+		cultivo.flag.fin_contador = 1;
+		cultivo.contador_aux = 10e3;
 	}
 }
 
 void inicializar_leds(){
 	/*	Funcion inicializar_leds()
-	*	No recive ni devuelve un valor.
-	*	Se inicializan los 4 leds de la placa Discovery STM32F4.
-	*/
+	 *	No recive ni devuelve un valor.
+	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
+	 */
 
 	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
 
@@ -164,7 +171,11 @@ void task_manager(void){
 	// Otras tareas.
 	led_task();
 
-	check_cultivo_task();
+	// Si hay una plantacion activa, se controla la temperatura.
+	if(cultivo.flag.fin_contador){
+		check_cultivo_task();
+		cultivo.flag.fin_contador = 0;
+	}
 
 	if(cultivo.flag.control_activo){
 		control_temp_task();
@@ -173,10 +184,10 @@ void task_manager(void){
 
 void dht_interior_task(){
 	/*	Funcion dht_interior_task()
-	*	No recive ni devuelve un valor.
-	*	Tarea que se encarga de leer los datos del sensor 
-	*	DHT11 de temperatura interior.
-	*/
+	 *	No recive ni devuelve un valor.
+	 *	Tarea que se encarga de leer los datos del sensor
+	 *	DHT11 de temperatura interior.
+	 */
 	if(dht_interior.flag){
 		leer_dht_interior();
 		dht_interior.flag = 0;
@@ -185,10 +196,10 @@ void dht_interior_task(){
 
 void dht_exterior_task(){
 	/*	Funcion dht_exterior_task()
-	*	No recive ni devuelve un valor.
-	*	Tarea que se encarga de leer los datos del sensor 
-	*	DHT11 de temperatura eterior.
-	*/
+	 *	No recive ni devuelve un valor.
+	 *	Tarea que se encarga de leer los datos del sensor
+	 *	DHT11 de temperatura eterior.
+	 */
 	if(dht_exterior.flag){
 		leer_dht_exterior();
 		dht_exterior.flag = 0;
@@ -197,10 +208,10 @@ void dht_exterior_task(){
 
 void led_task(){
 	/*	Funcion led_task()
-	*	No recive ni devuelve un valor.
-	*	Tarea que se concentra en el parpadeo 
-	*	de un led de control de programa.
-	*/
+	 *	No recive ni devuelve un valor.
+	 *	Tarea que se concentra en el parpadeo
+	 *	de un led de control de programa.
+	 */
 	switch(led.flag.fin_contador){
 	case 0: GPIO_ResetBits(GPIOD,GPIO_Pin_13);break;
 	case 1:	GPIO_SetBits(GPIOD,GPIO_Pin_13);break;
@@ -210,9 +221,9 @@ void led_task(){
 
 void ldr_task(){
 	/*	Funcion ldr_task()
-	*	No recive ni devuelve un valor.
-	*	Tarea que lee un valor de ADC establecido en adc.h.
-	*/
+	 *	No recive ni devuelve un valor.
+	 *	Tarea que lee un valor de ADC establecido en adc.h.
+	 */
 
 	if(ldr.flag.fin_contador){
 		ldr.contador_promedio++; 
@@ -231,9 +242,9 @@ void ldr_task(){
 
 void yl69_task(){
 	/*	Funcion yl_69_task()
-	*	No recive ni devuelve un valor.
-	*	Tarea que lee un valor de ADC establecido en adc.h
-	*/
+	 *	No recive ni devuelve un valor.
+	 *	Tarea que lee un valor de ADC establecido en adc.h
+	 */
 	if(yl.flag){
 		yl.adc_cuentas = adc_leer_cuentas_yl69();
 		yl.flag = 0;
@@ -241,11 +252,11 @@ void yl69_task(){
 }
 
 void display_task(){
-	/*	Funcion ldr_task()
-	*	No recive ni devuelve un valor.
-	*	Tarea que lee un valor de ADC establecido en adc.h
-	*/
-	
+	/*	Funcion display_task()
+	 *	No recive ni devuelve un valor.
+	 *	Tarea que lee un valor de ADC establecido en adc.h
+	 */
+
 	if(display.flag){
 		char buffer[16];
 
@@ -310,7 +321,7 @@ void display_task(){
 			case STATE_DHT_CHECKSUM_GOOD:{
 				UB_LCD_2x16_String(0,0,"Temp:       "); // Texto en la linea 1
 				UB_LCD_2x16_String(12,0,dht_interior.temperatura_string); // Texto en la linea 1
-				UB_LCD_2x16_String(0,1,"Inter       "); // Texto en la linea 1
+				UB_LCD_2x16_String(0,1,"Inter  "); // Texto en la linea 1
 				display.flag = 0;
 			};break;
 			case STATE_DHT_CHECKSUM_BAD:{
@@ -429,21 +440,32 @@ void check_cultivo_task(){
 	if(cultivo.flag.control_activo){
 		TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
 
-		for(i=0;i<2;i++){
+		for(i=0;i<3;i++){
 
 			if(cultivo.etapa[i].year == datatime.year && cultivo.etapa[i].month == datatime.month && cultivo.etapa[i].date == datatime.date
-					&& cultivo.etapa[i].hours == datatime.hours){
+					&& cultivo.etapa[i].hours == datatime.hours && cultivo.etapa[i].minutes == datatime.minutes){
 				// Se establecen los valores de control de la etapa cuando se llega al dia.
+				control.limite_delta_temp = cultivo.variables[i].limite_delta_temp;
+				control.max_temp_fan = cultivo.variables[i].max_temp_fan;
+				control.min_temp_fan = cultivo.variables[i].min_temp_fan;
+				control.max_temp_calentador = cultivo.variables[i].max_temp_calentador;
+				control.min_temp_calentador = cultivo.variables[i].min_temp_calentador;
 				cultivo.etapa_actual = i;
-//				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+				//				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
 			}
 		}
+
+
 	}
 }
 
 void cargar_datos(){
+	/*	Funcion cargar_datos()
+	 * 	Esta funcion carga los datos por defecto al sistema de control.
+	 * 	De momento los valores se toman de unos arreglos ya predefinidos, la idea es que sean leidos por memoria externa.
+	 */
 
-	//Temperatura
+	//Temperaturas por defecto.
 	control.limite_delta_temp = 5;
 	control.max_temp_fan = 26;
 	control.min_temp_fan = 25;
@@ -453,19 +475,175 @@ void cargar_datos(){
 	control.flag.fan_encendido = 0;
 	control.flag.calentador_encendido = 0;
 
-	//Cultivo
+	configurar_cultivo_tomate();
+}
+
+int fecha_valida(TM_RTC_t fecha_control){
+	/*	Funcion fecha_valida()
+	 * 	Funcion encargada de retornar si la fecha ingresada en una etapa es valida o no.
+	 * 	Si la fecha se encuentra en el pasado es rechazada, si es del futuro se acepta.
+	 */
+
+	if(fecha_control.year < datatime.year){
+		return 0;
+	}
+	else if(fecha_control.month < datatime.month){
+		return 0;
+	}
+	else if(fecha_control.date < datatime.date){
+		return 0;
+	}
+	else if(fecha_control.hours < datatime.hours){
+		return 0;
+	}
+	else if(fecha_control.minutes < datatime.minutes){
+		return 0;
+	}
+	else
+		return 1;
+}
+
+void configurar_cultivo_tomate(void){
+	/*	Funcion configurar_cultivo_tomate()
+	 * 	Funcion que inicializa los valores de control de cultivo.
+	 *	Se configuran las fechas de las etapas y las variables objetivo para cada una de ellas.
+	 *	Ademas se comprueba que las fechas ingresadas sean correctas, si todas lo son se activa el seguimiento.
+	 */
+
+	uint8_t i,n_etapas_validas = 0;
+
+	//Fechas de comienzo del cultivo para cada etapa.
 	cultivo.etapa[0].year = 18;
-	cultivo.etapa[0].month = 9;
-	cultivo.etapa[0].date = 25;
-	cultivo.etapa[0].hours = 11;
+	cultivo.etapa[0].month = 10;
+	cultivo.etapa[0].date = 1;
+	cultivo.etapa[0].hours = 14;
+	cultivo.etapa[0].minutes = 10;
 
 	cultivo.etapa[1].year = 18;
-	cultivo.etapa[1].month = 9;
-	cultivo.etapa[1].date = 25;
-	cultivo.etapa[1].hours = 12;
-	cultivo.contador = 14000;
-	cultivo.flag.control_activo = 0;
+	cultivo.etapa[1].month = 10;
+	cultivo.etapa[1].date = 1;
+	cultivo.etapa[1].hours = 14;
+	cultivo.etapa[1].minutes = 11;
+
+	cultivo.etapa[2].year = 18;
+	cultivo.etapa[2].month = 10;
+	cultivo.etapa[2].date = 1;
+	cultivo.etapa[2].hours = 14;
+	cultivo.etapa[2].minutes = 12;
+
+	// Variables del cultivo para cada etapa.
+	cultivo.variables[0].limite_delta_temp = 3;
+	cultivo.variables[0].max_temp_calentador = 20 ;
+	cultivo.variables[0].max_temp_fan = 23;
+	cultivo.variables[0].min_temp_calentador = 18;
+	cultivo.variables[0].min_temp_fan = 21;
+
+	cultivo.variables[1].limite_delta_temp = 2;
+	cultivo.variables[1].max_temp_calentador = 19 ;
+	cultivo.variables[1].max_temp_fan = 22;
+	cultivo.variables[1].min_temp_calentador = 17;
+	cultivo.variables[1].min_temp_fan = 20;
+
+	cultivo.variables[2].limite_delta_temp = 2;
+	cultivo.variables[2].max_temp_calentador = 19 ;
+	cultivo.variables[2].max_temp_fan = 22;
+	cultivo.variables[2].min_temp_calentador = 17;
+	cultivo.variables[2].min_temp_fan = 20;
+
 	strcpy(cultivo.nombre,"Tomate");
+
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+
+	// Se comprueba que todas las etapas sean validas, es decir que no tengan una fecha anterior a la actual.
+	for(i=0;i<3;i++){
+		if(fecha_valida(cultivo.etapa[i]))
+			n_etapas_validas++;
+	}
+
+	if(n_etapas_validas == 3){
+		// Si el numero de etapas validas es el total se activa el control.
+		cultivo.flag.control_activo = 1;
+	}
+	else
+		cultivo.flag.control_activo = 0;
+}
+
+
+void RCC_Configuration(void)
+{
+	/* --------------------------- System Clocks Configuration -----------------*/
+	/* USART3 habilitación del timer */
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+
+	/* GPIOB habilitación del timer */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+}
+
+void GPIO_Configuration(void)
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+
+	/*-------------------------- Configuración GPIO ----------------------------*/
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+	/* Conección de los pines USART al AF */
+	GPIO_PinAFConfig(GPIOD, GPIO_PinSource8, GPIO_AF_USART3);
+	GPIO_PinAFConfig(GPIOD, GPIO_PinSource9, GPIO_AF_USART3);
+}
+
+static void NVIC_Config(void)
+{
+	NVIC_InitTypeDef NVIC_InitStructure;
+
+	/* Enable the USARTx Interrupt */
+	NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 10;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+}
+
+void USART3_Configuration(void)
+{
+	USART_InitTypeDef USART_InitStructure;
+
+	/* USARTx configuration ------------------------------------------------------*/
+	/* USARTx configurada como sigue:
+        - BaudRate = 9600 baud
+        - Largo de palabra = 8 Bits
+        - Un Bit de stop
+        - Sin paridad
+        - COntrol de flujo por hardware deshabilitado (RTS and CTS signals)
+        - Recepcion y transmision habilitadas
+	 */
+	USART_InitStructure.USART_BaudRate = 9600;
+	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;
+	USART_InitStructure.USART_Parity = USART_Parity_No;
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+
+	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+
+	USART_Init(USART3, &USART_InitStructure);
+
+	USART_Cmd(USART3, ENABLE);
+}
+
+void USART3_IRQHandler(void) {
+	//Check if interrupt was because data is received
+	if (USART_GetITStatus(USART3, USART_IT_RXNE)) {
+		//Do your stuff here
+
+		cultivo.flag.control_activo = (cultivo.flag.control_activo)?0:1;
+
+		//Clear interrupt flag
+		USART_ClearITPendingBit(USART3, USART_IT_RXNE);
+	}
 }
 
 

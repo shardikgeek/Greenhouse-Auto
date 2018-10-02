@@ -86,7 +86,7 @@ void set_gpio_output_interior(void)
 	//Inicializacion del pin.
 	//
 
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
 
 	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_7;
 	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;

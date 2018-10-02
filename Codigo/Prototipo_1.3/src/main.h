@@ -8,6 +8,10 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 #define NUMERO_ETAPAS 5
+
+//
+
+
 #include <stm32f4xx.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,6 +59,7 @@ struct{
 }yl;
 
 struct{
+	// Esta estructura es la la que contiene los valores de control del sistema.
 	uint8_t limite_delta_temp;
 	uint8_t max_temp_fan;
 	uint8_t min_temp_fan;
@@ -67,20 +72,33 @@ struct{
 		}flag;
 }control;
 
+typedef struct{
+	uint8_t limite_delta_temp; // Limite maximo entre la temperatura exterior e interior.
+	uint8_t max_temp_fan; // Limite maximo para prender el ventilador.
+	uint8_t min_temp_fan; // Limite minimo para apagar el ventilador.
+	uint8_t min_temp_calentador; // Temperatura minima para prender el ventilador.
+	uint8_t max_temp_calentador; // Temeperatura maxima para apagar el ventilador.
+}temperaturas;
+
 struct{
-	TM_RTC_t etapa[NUMERO_ETAPAS];
+	// Esta estructura contiene los datos del cultivo
+
+	TM_RTC_t etapa[NUMERO_ETAPAS]; // Fechas de las distintas etapas.
 	uint8_t etapa_actual;
-	uint16_t contador;
+	uint16_t contador; // Contador para disparar eventos.
+	uint16_t contador_aux; // Contador para chequear cultivo.
 	char nombre[16];
+	temperaturas variables[NUMERO_ETAPAS];
 	struct{
-		uint8_t limite_delta_temp;
-		uint8_t max_temp_fan;
-		uint8_t min_temp_fan;
-		uint8_t min_temp_calentador;
-		uint8_t max_temp_calentador;
+		uint8_t limite_delta_temp; // Limite maximo entre la temperatura exterior e interior.
+		uint8_t max_temp_fan; // Limite maximo para prender el ventilador.
+		uint8_t min_temp_fan; // Limite minimo para apagar el ventilador.
+		uint8_t min_temp_calentador; // Temperatura minima para prender el ventilador.
+		uint8_t max_temp_calentador; // Temeperatura maxima para apagar el ventilador.
 	}control;
 	struct {
 		unsigned int control_activo : 1;
+		unsigned int fin_contador : 1;
 	}flag;
 }cultivo;
 
@@ -99,6 +117,16 @@ void display_task(void);
 void control_temp_task(void);
 void check_cultivo_task(void);
 void cargar_datos(void);
+void RCC_Configuration(void);
+void GPIO_Configuration(void);
+void USART3_Configuration(void);
+static void NVIC_Config(void);
+void USART3_IRQHandler(void);
+int fecha_valida(TM_RTC_t fecha_control);
+void configurar_cultivo_tomate(void);
+void configurar_cultivo_morron(void);
+void configurar_cultivo_zanahoria(void);
+
 
 
 #endif /* MAIN_H_ */
