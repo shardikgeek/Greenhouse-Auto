@@ -1,6 +1,6 @@
 #include "main.h"
 
-int contador_led;
+int contador_led = 1000;
 
 
 int main(void){
@@ -13,6 +13,7 @@ int main(void){
 	 */
 	UB_LCD_2x16_Init(); // Inicializacion del display.
 	inicializar_leds();
+	TIM5_Start(); // Inicializa el timer del DHT.
 	USART3_Config();
 	SystemInit(); // Activa el systick.
 	SysTick_Config(SystemCoreClock / 1e3); // Configuracion del tiempo de la interrupcion (cada 1us).
@@ -22,7 +23,7 @@ int main(void){
 	serial.flag.fin_paquete = 0;
 	serial.timeout = 0;
 	sistema.flag.conexion_serial = 0;
-	contador_led = atoi("1000");
+	sistema.flag.modo_monitor_serial = 0;
 
 	while(1){
 		task_manager();
@@ -41,25 +42,25 @@ void task_scheduler(void){
 	 */
 
 	//	// Rutina DHT
-	//	if(dht_interior.flag){
-	//		if(dht_interior.timeout >= 1){
-	//			dht_interior.timeout--;
-	//		}
-	//
-	//		if(dht_interior.timeout <= 0){
-	//			dht_interior.flag_timeout = 1;
-	//		}
-	//	}
-	//
-	//	if(dht_interior.contador >= 1){
-	//		dht_interior.contador--;
-	//	}
-	//	else{
-	//		dht_interior.flag = 1;
-	//		dht_interior.contador = 2000;
-	//		dht_interior.flag_timeout = 0;
-	//		dht_interior.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
-	//	}
+		if(dht_interior.flag){
+			if(dht_interior.timeout >= 1){
+				dht_interior.timeout--;
+			}
+
+			if(dht_interior.timeout <= 0){
+				dht_interior.flag_timeout = 1;
+			}
+		}
+
+		if(dht_interior.contador >= 1){
+			dht_interior.contador--;
+		}
+		else{
+			dht_interior.flag = 1;
+			dht_interior.contador = 2000;
+			dht_interior.flag_timeout = 0;
+			dht_interior.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
+		}
 	//
 	//	if(dht_exterior.flag){
 	//		if(dht_exterior.timeout >= 1){
@@ -125,6 +126,15 @@ void task_scheduler(void){
 		enviar_comando(":TMO,-,-!");
 	}
 
+	// Contador para el modo monitor
+	if(serial.contador_task >= 1){
+		serial.contador_task--;
+	}
+	else if(sistema.flag.modo_monitor_serial){
+		serial.contador_task = 1000;
+		serial.flag.mostrar_valores = 1;
+	}
+
 
 
 	//	if(cultivo.contador_aux >= 1){
@@ -168,7 +178,7 @@ void task_manager(void){
 	 */
 
 	// Lectura de datos
-	//	dht_interior_task();
+	dht_interior_task();
 	//	dht_exterior_task();
 	//	ldr_task();
 	//	yl69_task();
@@ -271,7 +281,7 @@ void display_task(){
 	if(display.flag){
 
 		if(!sistema.flag.conexion_serial){
-			char buffer[16];
+//			char buffer[16];
 
 			if(display.estado <3){
 				display.estado++;
@@ -402,32 +412,47 @@ void serial_task(void){
 	 * 	Llama a las distintas funciones que se encargan de ejecutar cada comando.
 	 */
 	if(serial.flag.fin_paquete){
-		if(!strcmp(serial.comando,"STR")){
+		if(!strcmp(serial.comando,"STR") && sistema.flag.conexion_serial){
 			GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
 			enviar_comando(":OKK,-,-!");
 		}
-		if(!strcmp(serial.comando,"ATR")){
-			GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+		if(!strcmp(serial.comando,"ATR") && sistema.flag.conexion_serial){
 			enviar_comando(":OKK,-,-!");
+			enviar_comando("\nDHT: ");
+			enviar_comando(dht_interior.temperatura_string);
 		}
-		if(!strcmp(serial.comando,"SKR")){
+		if(!strcmp(serial.comando,"SKR") && sistema.flag.conexion_serial){
 			GPIO_ToggleBits(GPIOD,GPIO_Pin_14);
 			enviar_comando(":OKK,-,-!");
 		}
-		if(!strcmp(serial.comando,"INI")){
+		if(!strcmp(serial.comando,"INI") && !sistema.flag.conexion_serial){
 			sistema.flag.conexion_serial = 1;
 			enviar_comando(":OKK,-,-!");
 		}
-		if(!strcmp(serial.comando,"STP")){
+		if(!strcmp(serial.comando,"STP") && sistema.flag.conexion_serial){
 			sistema.flag.conexion_serial = 0;
 			enviar_comando(":OKK,-,-!");
 		}
-		if(!strcmp(serial.comando,"LED")){
+		if(!strcmp(serial.comando,"LED") && sistema.flag.conexion_serial){
 			contador_led = atoi(serial.datos);
+			enviar_comando(":OKK,-,-!");
+		}
+		if(!strcmp(serial.comando,"MON") && !strcmp(serial.datos,"ON") && sistema.flag.conexion_serial){
+			sistema.flag.modo_monitor_serial = 1;
+			enviar_comando(":OKK,-,-!");
+		}
+		if(!strcmp(serial.comando,"MON") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
+			sistema.flag.modo_monitor_serial = 0;
 			enviar_comando(":OKK,-,-!");
 		}
 	}
 	serial.flag.fin_paquete = 0;
+
+	if(sistema.flag.modo_monitor_serial && serial.flag.mostrar_valores){ // Si se esta en modo monitor se muestra el valor cada vez q se
+		enviar_comando(" DHT: ");										//	vence el contador.
+		enviar_comando(dht_interior.temperatura_string);
+		serial.flag.mostrar_valores = 0;
+	}
 }
 
 void cargar_datos(){
@@ -627,8 +652,8 @@ void USART3_IRQHandler(void) {
 			strcpy(serial.comando,""); // Limpia la string.
 			strcpy(serial.datos,""); // Limpia la string.
 		}
-		else if((serial.aux == '!' && serial.flag.comienzo_paquete) || serial.contador == 15){ // Se termina paquete con !
-			strncpy(serial.datos,serial.buffer,17); // Se guardan los datos recibidos.
+		else if((serial.aux == '!' && serial.flag.comienzo_paquete) || serial.contador == 256){ // Se termina paquete con !
+			strncpy(serial.datos,serial.buffer,256); // Se guardan los datos recibidos.
 			strncpy(serial.buffer,"",17); // Se limpia el buffer.
 			serial.flag.fin_datos = 1; // Se informa que los datos estan disponibles.
 			serial.contador = 0; // Se reinica el contador.

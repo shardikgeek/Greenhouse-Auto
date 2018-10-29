@@ -106,10 +106,11 @@ struct{
 	uint16_t aux;
 	uint16_t timeout;
 	uint8_t contador;
-	char buffer[17];
+	uint16_t contador_task;
+	char buffer[256];
 	char comando[17];
 	char cant_bytes[17];
-	char datos[17];
+	char datos[256];
 	struct {
 		unsigned int fin_comando : 1;
 		unsigned int fin_cantbytes : 1;
@@ -117,6 +118,7 @@ struct{
 		unsigned int fin_contador : 1;
 		unsigned int comienzo_paquete : 1;
 		unsigned int fin_paquete : 1;
+		unsigned int mostrar_valores : 1;
 	}flag;
 }serial;
 
@@ -126,6 +128,7 @@ struct{
 	 */
 	struct {
 		unsigned int conexion_serial : 1;
+		unsigned int modo_monitor_serial : 1;
 	}flag;
 }sistema;
 
