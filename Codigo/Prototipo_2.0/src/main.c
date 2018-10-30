@@ -11,6 +11,8 @@ int main(void){
 	 *	y dos analogicos. 
 	 *
 	 */
+	FIL myFile;   // Filehandler
+
 	UB_LCD_2x16_Init(); // Inicializacion del display.
 	inicializar_leds();
 	inicializar_fan();
@@ -25,6 +27,7 @@ int main(void){
 
 	SystemInit(); // Activa el systick.
 	SysTick_Config(SystemCoreClock / 1e3); // Configuracion del tiempo de la interrupcion (cada 1us).
+	UB_Fatfs_Init(); // Init de la SD.
 
 	serial.contador = 0;
 	serial.flag.comienzo_paquete = 0;
@@ -32,6 +35,29 @@ int main(void){
 	serial.timeout = 0;
 	sistema.flag.conexion_serial = 0;
 	sistema.flag.modo_monitor_serial = 0;
+
+	// Check ob Medium eingelegt ist
+	  if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+			//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+		// Media mounten
+	    if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+	    	//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+	      // File zum schreiben im root neu anlegen
+	      if(UB_Fatfs_OpenFile(&myFile, "0:/UB_File.txt", F_WR_NEW)==FATFS_OK) {
+	    	// ein paar Textzeilen in das File schreiben
+	        UB_Fatfs_WriteString(&myFile,"Test der WriteString-Funktion");
+	        UB_Fatfs_WriteString(&myFile,"hier Zeile wacho");
+	        UB_Fatfs_WriteString(&myFile,"ENDE");
+	        // File schliessen
+	        UB_Fatfs_CloseFile(&myFile);
+	        GPIO_SetBits(GPIOD,GPIO_Pin_14);
+	      }
+	      // Media unmounten
+	   	  UB_Fatfs_UnMount(MMC_0);
+	    }
+	  }else{
+			GPIO_SetBits(GPIOD,GPIO_Pin_15);
+	  }
 
 	while(1){
 		task_manager();

@@ -35,6 +35,7 @@
 #include "adc.h"
 #include "stm32_ub_lcd_2x16.h" // Inclusion de la libreria para manejar el LCD
 #include <rtc.h>
+#include "stm32_ub_fatfs.h" // Libreria de fatfs.
 
 
 // Variables globales.
@@ -136,6 +137,19 @@ struct{
 		unsigned int mostrar_valores : 1;
 	}flag;
 }serial;
+
+struct{
+	uint18_t aux;
+	struct {
+		unsigned int conectada : 1;
+		unsigned int montada : 1;
+		unsigned int fallo_escritura : 1;
+		unsigned int fallo_lectura : 1;
+		unsigned int archivo_existente : 1;
+		unsigned int archivo_inexistente : 1;
+		unsigned int mostrar_valores : 1;
+	}flag;
+}tarjeta_sd;
 
 struct{
 	/*	struct sistema
