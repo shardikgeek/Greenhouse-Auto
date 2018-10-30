@@ -13,8 +13,16 @@ int main(void){
 	 */
 	UB_LCD_2x16_Init(); // Inicializacion del display.
 	inicializar_leds();
+	inicializar_fan();
+	inicializar_calentador();
+	inicializar_bomba();
+	adc_inicializar();
 	TIM5_Start(); // Inicializa el timer del DHT.
 	USART3_Config();
+
+	TM_RTC_Init(TM_RTC_ClockSource_External); // Se inicializa el RTC.
+	TM_RTC_Interrupts(TM_RTC_Int_1s); //Se activan las interrupciones del RTC.
+
 	SystemInit(); // Activa el systick.
 	SysTick_Config(SystemCoreClock / 1e3); // Configuracion del tiempo de la interrupcion (cada 1us).
 
@@ -61,44 +69,44 @@ void task_scheduler(void){
 			dht_interior.flag_timeout = 0;
 			dht_interior.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
 		}
+
+		if(dht_exterior.flag){
+			if(dht_exterior.timeout >= 1){
+				dht_exterior.timeout--;
+			}
+
+			if(dht_exterior.timeout <= 0){
+				dht_exterior.flag_timeout = 1;
+			}
+		}
+
+		if(dht_exterior.contador >= 1){
+			dht_exterior.contador--;
+		}
+		else{
+			dht_exterior.flag = 1;
+			dht_exterior.contador = 2000;
+			dht_exterior.flag_timeout = 0;
+			dht_exterior.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
+		}
 	//
-	//	if(dht_exterior.flag){
-	//		if(dht_exterior.timeout >= 1){
-	//			dht_exterior.timeout--;
-	//		}
-	//
-	//		if(dht_exterior.timeout <= 0){
-	//			dht_exterior.flag_timeout = 1;
-	//		}
-	//	}
-	//
-	//	if(dht_exterior.contador >= 1){
-	//		dht_exterior.contador--;
-	//	}
-	//	else{
-	//		dht_exterior.flag = 1;
-	//		dht_exterior.contador = 2000;
-	//		dht_exterior.flag_timeout = 0;
-	//		dht_exterior.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
-	//	}
-	//
-	//	// Rutina LDR
-	//	if(ldr.contador >= 1){
-	//		ldr.contador--;
-	//	}
-	//	else{
-	//		ldr.flag.fin_contador = 1;
-	//		ldr.contador = 100;
-	//	}
-	//
-	//	// Ruitna YL-69
-	//	if(yl.contador >= 1){
-	//		yl.contador--;
-	//	}
-	//	else{
-	//		yl.flag = 1;
-	//		yl.contador = 500;
-	//	}
+		// Rutina LDR
+		if(ldr.contador >= 1){
+			ldr.contador--;
+		}
+		else{
+			ldr.flag.fin_contador = 1;
+			ldr.contador = 100;
+		}
+
+		// Ruitna YL-69
+		if(yl.contador >= 1){
+			yl.contador--;
+		}
+		else{
+			yl.flag = 1;
+			yl.contador = 500;
+		}
 
 	// Rutina del LED.
 	if(led.contador >= 1){
@@ -118,6 +126,7 @@ void task_scheduler(void){
 		display.contador = 2000;
 	}
 
+	// Rutina Serial.
 	if(serial.timeout >= 1){
 		serial.timeout--;
 	}
@@ -170,6 +179,78 @@ void inicializar_leds(){
 
 }
 
+void inicializar_fan(){
+	/*	Funcion inicializar_leds()
+	 *	No recive ni devuelve un valor.
+	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
+	 */
+
+	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
+
+	//
+	//Inicializacion de los leds.
+	//
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+
+	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_14;
+	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
+	GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
+	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
+	GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
+
+	GPIO_Init(GPIOD,&GPIO_Init_Pins); // Carga de la estrucura de datos.
+
+}
+
+void inicializar_calentador(){
+	/*	Funcion inicializar_leds()
+		 *	No recive ni devuelve un valor.
+		 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
+		 */
+
+		GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
+
+		//
+		//Inicializacion de los leds.
+		//
+
+		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+
+		GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_4;
+		GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
+		GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
+		GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
+		GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
+
+		GPIO_Init(GPIOC,&GPIO_Init_Pins); // Carga de la estrucura de datos.
+
+}
+
+void inicializar_bomba(){
+	/*	Funcion inicializar_leds()
+		 *	No recive ni devuelve un valor.
+		 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
+		 */
+
+		GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
+
+		//
+		//Inicializacion de los leds.
+		//
+
+		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+
+		GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_5;
+		GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
+		GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
+		GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
+		GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
+
+		GPIO_Init(GPIOC,&GPIO_Init_Pins); // Carga de la estrucura de datos.
+
+}
+
 void task_manager(void){
 	/*	Funcion task_manager
 	 *	No recive ni devuelve un valor.
@@ -179,9 +260,9 @@ void task_manager(void){
 
 	// Lectura de datos
 	dht_interior_task();
-	//	dht_exterior_task();
-	//	ldr_task();
-	//	yl69_task();
+	dht_exterior_task();
+	ldr_task();
+	yl69_task();
 
 	serial_task();
 	// Manejo de la interfaz de usuario.
@@ -411,9 +492,12 @@ void serial_task(void){
 	 * 	Se encarga de manejar los paquetes que van ingresando al MCU.
 	 * 	Llama a las distintas funciones que se encargan de ejecutar cada comando.
 	 */
+	char msj[16] = "";
+
 	if(serial.flag.fin_paquete){
 		if(!strcmp(serial.comando,"STR") && sistema.flag.conexion_serial){
-			GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
+			GPIO_ToggleBits(GPIOD,GPIO_Pin_14);
+			GPIO_ToggleBits(GPIOC,GPIO_Pin_4 |GPIO_Pin_5);
 			enviar_comando(":OKK,-,-!");
 		}
 		if(!strcmp(serial.comando,"ATR") && sistema.flag.conexion_serial){
@@ -431,6 +515,8 @@ void serial_task(void){
 		}
 		if(!strcmp(serial.comando,"STP") && sistema.flag.conexion_serial){
 			sistema.flag.conexion_serial = 0;
+			sistema.flag.modo_monitor_serial = 0;
+			serial.flag.mostrar_valores = 0;
 			enviar_comando(":OKK,-,-!");
 		}
 		if(!strcmp(serial.comando,"LED") && sistema.flag.conexion_serial){
@@ -449,8 +535,17 @@ void serial_task(void){
 	serial.flag.fin_paquete = 0;
 
 	if(sistema.flag.modo_monitor_serial && serial.flag.mostrar_valores){ // Si se esta en modo monitor se muestra el valor cada vez q se
-		enviar_comando(" DHT: ");										//	vence el contador.
+		TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+		sprintf(msj,"%d:%d:%d",datatime.hours,datatime.minutes,datatime.seconds);
+		enviar_comando(msj);
+		enviar_comando(" DHTI: ");										//	vence el contador.
 		enviar_comando(dht_interior.temperatura_string);
+		enviar_comando(" DHTE: ");										//	vence el contador.
+		enviar_comando(dht_exterior.temperatura_string);
+		sprintf(msj," LDR: %d", ldr.adc_cuentas);
+		enviar_comando(msj);
+		sprintf(msj," YL-69: %d\r\n", yl.adc_cuentas);
+		enviar_comando(msj);
 		serial.flag.mostrar_valores = 0;
 	}
 }
@@ -594,7 +689,7 @@ static void USART3_Config(void)
 	/* Configure USART3_Tx and USART3_Rx as alternate function */
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz; // estaba en 50MHz
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
 	GPIO_Init(GPIOD, &GPIO_InitStructure);
@@ -624,8 +719,8 @@ static void USART3_Config(void)
 
 	NVIC_InitStruct.NVIC_IRQChannel = USART3_IRQn;
 	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;
-	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 10;
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 10;
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
 	NVIC_Init(&NVIC_InitStruct);
 
 	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE); // Se habilitan las interrupciones cuando se recibe un dato.
@@ -653,16 +748,29 @@ void USART3_IRQHandler(void) {
 			strcpy(serial.datos,""); // Limpia la string.
 		}
 		else if((serial.aux == '!' && serial.flag.comienzo_paquete) || serial.contador == 256){ // Se termina paquete con !
-			strncpy(serial.datos,serial.buffer,256); // Se guardan los datos recibidos.
-			strncpy(serial.buffer,"",17); // Se limpia el buffer.
-			serial.flag.fin_datos = 1; // Se informa que los datos estan disponibles.
-			serial.contador = 0; // Se reinica el contador.
-			serial.flag.comienzo_paquete = 0; // Se reinicia la bandera.
-			serial.flag.fin_comando = 0; // Se reinicia la bandera.
-			serial.flag.fin_cantbytes = 0; // Se reinicia la bandera.
-			serial.flag.fin_datos = 0; // Se reinicia la bandera.
-			serial.flag.fin_paquete = 1; // Se informa el paquete disponible.
-			serial.timeout = 0; // Se detiene el contador de tiempo de espera.
+
+			if(!serial.flag.fin_comando || !serial.flag.fin_cantbytes ){
+				enviar_comando(":ERR,10,BAD_FORMAT!");
+				serial.contador = 0; // Se reinica el contador.
+				serial.flag.comienzo_paquete = 0; // Se reinicia la bandera.
+				serial.flag.fin_comando = 0; // Se reinicia la bandera.
+				serial.flag.fin_cantbytes = 0; // Se reinicia la bandera.
+				serial.flag.fin_datos = 0; // Se reinicia la bandera.
+				serial.flag.fin_paquete = 0; // Se informa el paquete disponible.
+				serial.timeout = 0; // Se detiene el contador de tiempo de espera.
+			}
+			else{
+				strncpy(serial.datos,serial.buffer,256); // Se guardan los datos recibidos.
+				strncpy(serial.buffer,"",17); // Se limpia el buffer.
+				serial.flag.fin_datos = 1; // Se informa que los datos estan disponibles.
+				serial.contador = 0; // Se reinica el contador.
+				serial.flag.comienzo_paquete = 0; // Se reinicia la bandera.
+				serial.flag.fin_comando = 0; // Se reinicia la bandera.
+				serial.flag.fin_cantbytes = 0; // Se reinicia la bandera.
+				serial.flag.fin_datos = 0; // Se reinicia la bandera.
+				serial.flag.fin_paquete = 1; // Se informa el paquete disponible.
+				serial.timeout = 0; // Se detiene el contador de tiempo de espera.
+			}
 		}
 		else if((serial.aux == ',' ) && serial.flag.comienzo_paquete){ // Se detecta el fin de campo.
 			serial.timeout = 100; // Se setea el tiempo maximo de espera.

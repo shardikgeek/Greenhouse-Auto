@@ -5,6 +5,21 @@
  *      Author: diego
  */
 
+/*	PINES UTILIZADOS
+ * 	PC1 -> YL-69 (ADC - Channel) (andando)
+ * 	PC2 -> LDR (ADC - Channel) (andando)
+ * 	PC4 -> Calentador (DigitalOutput)
+ * 	PC5 -> Bomba (DigitalOutput)
+ * 	PE7 -> Temp Interior (DigitalInput) (andando)
+ * 	PE9 -> Temp Exterior (DigitalInput) (andando)
+ * 	PE11 -> Buzzer (DAC - Channel)
+ * 	PD8 -> TX (USART3) (andando)
+ * 	PD9 -> RX (USART3) (andando)
+ * 	PD11 -> CTS (USART3) (andando)
+ * 	PD12 -> RTS (USART3) (andando)
+ * 	PD14 -> Motor (DAC-PWM - Channel)
+ */
+
 #ifndef MAIN_H_
 #define MAIN_H_
 #define NUMERO_ETAPAS 5
@@ -137,6 +152,9 @@ TM_RTC_t datatime;
 
 // Prototipos de funciones.
 void inicializar_leds(void);
+void inicializar_fan(void);
+void inicializar_calentador(void);
+void inicializar_bomba(void);
 void task_manager(void);
 void dht_interior_task(void);
 void dht_exterior_task(void);

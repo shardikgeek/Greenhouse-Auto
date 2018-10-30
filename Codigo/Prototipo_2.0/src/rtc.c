@@ -114,13 +114,13 @@ uint32_t TM_RTC_Init(TM_RTC_ClockSource_t source) {
 		TM_RTC_Config(source);
 
 		/* Set date and time */
-		datatime.date = 24;    //Dia de la semana
-		datatime.month = 9;
+		datatime.date = 30;    //Dia de la semana
+		datatime.month = 10;
 		datatime.year = 18;
-		datatime.hours = 10;
-		datatime.minutes = 47;
+		datatime.hours = 9;
+		datatime.minutes = 42;
 		datatime.seconds = 0;
-		datatime.day = 1;      //1: Lunes
+		datatime.day = 2;      //1: Lunes
 
 		/* Set date and time */
 		TM_RTC_SetDateTime(&datatime, TM_RTC_Format_BIN);
