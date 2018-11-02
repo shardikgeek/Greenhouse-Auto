@@ -11,7 +11,6 @@ int main(void){
 	 *	y dos analogicos. 
 	 *
 	 */
-	FIL myFile;   // Filehandler
 
 	UB_LCD_2x16_Init(); // Inicializacion del display.
 	inicializar_leds();
@@ -36,28 +35,31 @@ int main(void){
 	sistema.flag.conexion_serial = 0;
 	sistema.flag.modo_monitor_serial = 0;
 
-	// Check ob Medium eingelegt ist
-	  if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
-			//GPIO_SetBits(GPIOD,GPIO_Pin_13);
-		// Media mounten
-	    if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
-	    	//GPIO_SetBits(GPIOD,GPIO_Pin_12);
-	      // File zum schreiben im root neu anlegen
-	      if(UB_Fatfs_OpenFile(&myFile, "0:/UB_File.txt", F_WR_NEW)==FATFS_OK) {
-	    	// ein paar Textzeilen in das File schreiben
-	        UB_Fatfs_WriteString(&myFile,"Test der WriteString-Funktion");
-	        UB_Fatfs_WriteString(&myFile,"hier Zeile wacho");
-	        UB_Fatfs_WriteString(&myFile,"ENDE");
-	        // File schliessen
-	        UB_Fatfs_CloseFile(&myFile);
-	        GPIO_SetBits(GPIOD,GPIO_Pin_14);
-	      }
-	      // Media unmounten
-	   	  UB_Fatfs_UnMount(MMC_0);
-	    }
-	  }else{
-			GPIO_SetBits(GPIOD,GPIO_Pin_15);
-	  }
+//	// Check ob Medium eingelegt ist
+//	  if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+//			//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+//		// Media mounten
+//	    if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+//	    	//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+//	      // File zum schreiben im root neu anlegen
+//	      if(UB_Fatfs_OpenFile(&myFile, "0:/UB_File.txt", F_WR_NEW)==FATFS_OK) {
+//	    	// ein paar Textzeilen in das File schreiben
+//	        UB_Fatfs_WriteString(&myFile,"Test der WriteString-Funktion");
+//	        UB_Fatfs_WriteString(&myFile,"hier Zeile wacho");
+//	        UB_Fatfs_WriteString(&myFile,"ENDE");
+//	        // File schliessen
+//	        UB_Fatfs_CloseFile(&myFile);
+//	        GPIO_SetBits(GPIOD,GPIO_Pin_14);
+//	      }
+//	      // Media unmounten
+//	   	  UB_Fatfs_UnMount(MMC_0);
+//	    }
+//	  }else{
+//			GPIO_SetBits(GPIOD,GPIO_Pin_15);
+//	  }
+
+	  tarjeta_sd.flag.fallo_abrir_archivo = 0;
+	  cargar_datos(); // Se cargan los datos por default.
 
 	while(1){
 		task_manager();
@@ -170,15 +172,13 @@ void task_scheduler(void){
 		serial.flag.mostrar_valores = 1;
 	}
 
-
-
-	//	if(cultivo.contador_aux >= 1){
-	//		cultivo.contador_aux--;
-	//	}
-	//	else{
-	//		cultivo.flag.fin_contador = 1;
-	//		cultivo.contador_aux = 10e3;
-	//	}
+//	if(cultivo.contador_aux >= 1){
+//		cultivo.contador_aux--;
+//	}
+//	else{
+//		cultivo.flag.fin_contador = 1;
+//		cultivo.contador_aux = 10e3;
+//	}
 }
 
 void inicializar_leds(){
@@ -299,15 +299,15 @@ void task_manager(void){
 		led_task();
 	}
 
-	//	// Si hay una plantacion activa, se controla la temperatura.
-	//	if(cultivo.flag.fin_contador){
-	//		check_cultivo_task();
-	//		cultivo.flag.fin_contador = 0;
-	//	}
-	//
-	//	if(cultivo.flag.control_activo){
-	//		control_temp_task();
-	//	}
+//	// Si hay una plantacion activa, se controla la temperatura.
+//	if(cultivo.flag.fin_contador){
+//		check_cultivo_task();
+//		cultivo.flag.fin_contador = 0;
+//	}
+//
+//	if(cultivo.flag.control_activo){
+//		control_temp_task();
+//	}
 }
 
 void dht_interior_task(){
@@ -518,44 +518,69 @@ void serial_task(void){
 	 * 	Se encarga de manejar los paquetes que van ingresando al MCU.
 	 * 	Llama a las distintas funciones que se encargan de ejecutar cada comando.
 	 */
-	char msj[16] = "";
+	char msj[30] = "";
 
 	if(serial.flag.fin_paquete){
 		if(!strcmp(serial.comando,"STR") && sistema.flag.conexion_serial){
 			GPIO_ToggleBits(GPIOD,GPIO_Pin_14);
 			GPIO_ToggleBits(GPIOC,GPIO_Pin_4 |GPIO_Pin_5);
-			enviar_comando(":OKK,-,-!");
+			enviar_comando(":OKK,-,-!\r\n");
 		}
 		if(!strcmp(serial.comando,"ATR") && sistema.flag.conexion_serial){
 			enviar_comando(":OKK,-,-!");
-			enviar_comando("\nDHT: ");
+			enviar_comando(" DHT: ");
 			enviar_comando(dht_interior.temperatura_string);
 		}
 		if(!strcmp(serial.comando,"SKR") && sistema.flag.conexion_serial){
-			GPIO_ToggleBits(GPIOD,GPIO_Pin_14);
-			enviar_comando(":OKK,-,-!");
+			// Muestra si se pudo leer la tarjeta SD.
+			enviar_comando(":OKK,-,-! ");
+			if(tarjeta_sd.flag.fallo_abrir_archivo){
+				enviar_comando(":SD,4,FAIL!\r\n");
+			}
+			else{
+				enviar_comando(":SD,2,OK!");
+				sprintf(msj,"ESTADO_CULTIVO: %d.ETAPA_CULTIVO: %d.",cultivo.flag.control_activo,cultivo.etapa_actual);
+				enviar_comando(msj);
+				enviar_comando("\r\n");
+			}
 		}
 		if(!strcmp(serial.comando,"INI") && !sistema.flag.conexion_serial){
 			sistema.flag.conexion_serial = 1;
-			enviar_comando(":OKK,-,-!");
+			enviar_comando(":OKK,-,-!\r\n");
 		}
 		if(!strcmp(serial.comando,"STP") && sistema.flag.conexion_serial){
 			sistema.flag.conexion_serial = 0;
 			sistema.flag.modo_monitor_serial = 0;
 			serial.flag.mostrar_valores = 0;
-			enviar_comando(":OKK,-,-!");
+			enviar_comando(":OKK,-,-!\r\n");
 		}
 		if(!strcmp(serial.comando,"LED") && sistema.flag.conexion_serial){
 			contador_led = atoi(serial.datos);
-			enviar_comando(":OKK,-,-!");
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"DAT") && sistema.flag.conexion_serial){
+			cargar_datos();
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		// Comado SDC SD card Coneccted, se chequea si se puede montar la tarjeta.
+		if(!strcmp(serial.comando,"SDC") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-! ");
+			if(UB_Fatfs_Mount(MMC_0)==FATFS_OK){
+				enviar_comando(":SDC,8,Presente!\r\n");
+				UB_Fatfs_UnMount(MMC_0);
+			}
+			else{
+				enviar_comando(":SDC,8,Ausente!\r\n");
+			}
+
 		}
 		if(!strcmp(serial.comando,"MON") && !strcmp(serial.datos,"ON") && sistema.flag.conexion_serial){
 			sistema.flag.modo_monitor_serial = 1;
-			enviar_comando(":OKK,-,-!");
+			enviar_comando(":OKK,-,-!\r\n");
 		}
 		if(!strcmp(serial.comando,"MON") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
 			sistema.flag.modo_monitor_serial = 0;
-			enviar_comando(":OKK,-,-!");
+			enviar_comando(":OKK,-,-!\r\n");
 		}
 	}
 	serial.flag.fin_paquete = 0;
@@ -581,7 +606,9 @@ void cargar_datos(){
 	 * 	Esta funcion carga los datos por defecto al sistema de control.
 	 * 	De momento los valores se toman de unos arreglos ya predefinidos, la idea es que sean leidos por memoria externa.
 	 */
-
+	FIL myFile;   // Filehandler
+	char temp_string[51];
+	char *temp;
 	//Temperaturas por defecto.
 	control.limite_delta_temp = 5;
 	control.max_temp_fan = 26;
@@ -592,7 +619,51 @@ void cargar_datos(){
 	control.flag.fan_encendido = 0;
 	control.flag.calentador_encendido = 0;
 
-	configurar_cultivo_tomate();
+	// leer sd.
+	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+		// Media mounten
+		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+			// File zum schreiben im root neu anlegen
+			if(UB_Fatfs_OpenFile(&myFile, "0:/UB_File.txt", F_RD)==FATFS_OK) {
+				// ein paar Textzeilen in das File schreiben
+				if(UB_Fatfs_ReadString(&myFile,temp_string,50) == FATFS_OK){
+					tarjeta_sd.flag.fallo_abrir_archivo = 0;
+					//strcpy(tarjeta_sd.lectura,temp_string);
+
+					///////////////Codigo que interpreta el texto////////////
+					temp = strtok(temp_string," ,.-");
+
+					while(temp != NULL){
+						if(!strcmp("CULTIVO_ACTIVO",temp)){
+							temp = strtok(NULL," ,.-");
+							cultivo.flag.control_activo = atoi(temp);
+						}
+						else if(!strcmp("ETAPA_CULTIVO",temp)){
+							temp = strtok(NULL," ,.-");
+							cultivo.etapa_actual = atoi(temp);
+						}
+						temp = strtok(NULL," ,.-");
+
+					}
+					/////////////////////////////////////////////////////////
+				}
+				else{
+					tarjeta_sd.flag.fallo_abrir_archivo = 1;
+				}
+				// File schliessen
+				UB_Fatfs_CloseFile(&myFile);
+			}
+			// Media unmounten
+			UB_Fatfs_UnMount(MMC_0);
+		}
+	}
+	// cultivo activo?
+
+	// cual?
+
+	//configurar_cultivo_tomate();
 }
 
 int fecha_valida(TM_RTC_t fecha_control){

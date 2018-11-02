@@ -139,12 +139,14 @@ struct{
 }serial;
 
 struct{
-	uint18_t aux;
+	uint8_t aux;
+	char lectura[17];
 	struct {
 		unsigned int conectada : 1;
 		unsigned int montada : 1;
 		unsigned int fallo_escritura : 1;
 		unsigned int fallo_lectura : 1;
+		unsigned int fallo_abrir_archivo : 1;
 		unsigned int archivo_existente : 1;
 		unsigned int archivo_inexistente : 1;
 		unsigned int mostrar_valores : 1;
