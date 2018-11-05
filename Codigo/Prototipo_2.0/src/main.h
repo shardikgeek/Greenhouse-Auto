@@ -157,9 +157,12 @@ struct{
 	/*	struct sistema
 	 *  Estructura que contiene los estados mas generales del sistema.
 	 */
+	uint8_t contador_alarma;
 	struct {
 		unsigned int conexion_serial : 1;
 		unsigned int modo_monitor_serial : 1;
+		unsigned int conf_correcta : 1;
+		unsigned int contador_alarma : 1;
 	}flag;
 }sistema;
 
@@ -189,6 +192,7 @@ void configurar_cultivo_morron(void);
 void configurar_cultivo_zanahoria(void);
 static void USART3_Config(void);
 void enviar_comando(char *cmd);
+void activar_alarma();
 
 
 #endif /* MAIN_H_ */

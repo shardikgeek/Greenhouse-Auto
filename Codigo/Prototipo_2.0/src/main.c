@@ -35,6 +35,7 @@ int main(void){
 	sistema.flag.conexion_serial = 0;
 	sistema.flag.modo_monitor_serial = 0;
 
+
 //	// Check ob Medium eingelegt ist
 //	  if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
 //			//GPIO_SetBits(GPIOD,GPIO_Pin_13);
@@ -518,7 +519,8 @@ void serial_task(void){
 	 * 	Se encarga de manejar los paquetes que van ingresando al MCU.
 	 * 	Llama a las distintas funciones que se encargan de ejecutar cada comando.
 	 */
-	char msj[30] = "";
+	char msj[50] = "";
+	uint8_t dias = TM_RTC_GetDaysInMonth(11,18);
 
 	if(serial.flag.fin_paquete){
 		if(!strcmp(serial.comando,"STR") && sistema.flag.conexion_serial){
@@ -539,7 +541,7 @@ void serial_task(void){
 			}
 			else{
 				enviar_comando(":SD,2,OK!");
-				sprintf(msj,"ESTADO_CULTIVO: %d.ETAPA_CULTIVO: %d.",cultivo.flag.control_activo,cultivo.etapa_actual);
+				sprintf(msj,"NOMBRE: %s.ESTADO_CULTIVO: %d.ETAPA_CULTIVO: %d.",cultivo.nombre,cultivo.flag.control_activo,cultivo.etapa_actual);
 				enviar_comando(msj);
 				enviar_comando("\r\n");
 			}
@@ -561,6 +563,15 @@ void serial_task(void){
 		if(!strcmp(serial.comando,"DAT") && sistema.flag.conexion_serial){
 			cargar_datos();
 			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"DIAS") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			sprintf(msj,"Dias del mes: %d\r\n", dias);
+			enviar_comando(msj);
+		}
+		if(!strcmp(serial.comando,"ALR") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			activar_alarma();
 		}
 		// Comado SDC SD card Coneccted, se chequea si se puede montar la tarjeta.
 		if(!strcmp(serial.comando,"SDC") && sistema.flag.conexion_serial){
@@ -607,8 +618,13 @@ void cargar_datos(){
 	 * 	De momento los valores se toman de unos arreglos ya predefinidos, la idea es que sean leidos por memoria externa.
 	 */
 	FIL myFile;   // Filehandler
-	char temp_string[51];
+	char temp_string[53];
 	char *temp;
+	uint8_t estado_cultivo = -1;
+	uint8_t etapa_actual = -1;
+	uint8_t tipo_cultivo = -1;
+
+
 	//Temperaturas por defecto.
 	control.limite_delta_temp = 5;
 	control.max_temp_fan = 26;
@@ -628,7 +644,7 @@ void cargar_datos(){
 			// File zum schreiben im root neu anlegen
 			if(UB_Fatfs_OpenFile(&myFile, "0:/UB_File.txt", F_RD)==FATFS_OK) {
 				// ein paar Textzeilen in das File schreiben
-				if(UB_Fatfs_ReadString(&myFile,temp_string,50) == FATFS_OK){
+				if(UB_Fatfs_ReadString(&myFile,temp_string,52) == FATFS_OK){
 					tarjeta_sd.flag.fallo_abrir_archivo = 0;
 					//strcpy(tarjeta_sd.lectura,temp_string);
 
@@ -638,11 +654,15 @@ void cargar_datos(){
 					while(temp != NULL){
 						if(!strcmp("CULTIVO_ACTIVO",temp)){
 							temp = strtok(NULL," ,.-");
-							cultivo.flag.control_activo = atoi(temp);
+							estado_cultivo = atoi(temp);
 						}
 						else if(!strcmp("ETAPA_CULTIVO",temp)){
 							temp = strtok(NULL," ,.-");
-							cultivo.etapa_actual = atoi(temp);
+							etapa_actual = atoi(temp);
+						}
+						else if(!strcmp("TIPO_CULTIVO",temp)){
+							temp = strtok(NULL," ,.-");
+							tipo_cultivo = atoi(temp);
 						}
 						temp = strtok(NULL," ,.-");
 
@@ -659,12 +679,41 @@ void cargar_datos(){
 			UB_Fatfs_UnMount(MMC_0);
 		}
 	}
-	// cultivo activo?
 
+	 //cultivo activo?
+	if(!tarjeta_sd.flag.fallo_abrir_archivo && (estado_cultivo == -1 || etapa_actual == -1)){ // Se comprueba que los datos hayan sido leidos.
+		// Se manda el msj de error.
+		tarjeta_sd.flag.fallo_abrir_archivo = 1;
+
+	}
+	else if(!tarjeta_sd.flag.fallo_abrir_archivo && (estado_cultivo != -1 && etapa_actual != -1)){
+		cultivo.flag.control_activo = estado_cultivo;
+		cultivo.etapa_actual = etapa_actual;
+		switch(tipo_cultivo){
+			case 0:strcpy(cultivo.nombre,"TOMATE");;break;
+			case 1:strcpy(cultivo.nombre,"MORRON");;break;
+			case 2:strcpy(cultivo.nombre,"CUSTOM");;break;
+			default:strcpy(cultivo.nombre,"");;break;
+		}
+
+//		if(!strcmp(nombre_cultivo,"TOMATE")){
+//			//Configurar tomate
+//			strcpy(cultivo.nombre,nombre_cultivo);
+//		}
+//		else if(!strcmp(nombre_cultivo,"MORRON")){
+//			//Configurar morron
+//			strcpy(cultivo.nombre,nombre_cultivo);
+//		}
+//		else if(!strcmp(nombre_cultivo,"CUSTOM")){
+//			//Configurar custom
+//			strcpy(cultivo.nombre,nombre_cultivo);
+//		}
+	}
+}
 	// cual?
 
 	//configurar_cultivo_tomate();
-}
+
 
 int fecha_valida(TM_RTC_t fecha_control){
 	/*	Funcion fecha_valida()
@@ -768,6 +817,7 @@ void enviar_comando(char *cmd){
 		while (USART_GetFlagStatus(USART3, USART_FLAG_TC) == RESET); // Se espera a que termine de enviar (NOTAR QUE DICE FLAG).
 	}
 }
+
 static void USART3_Config(void)
 {
 	/*	Funcion USART3_Config
@@ -822,6 +872,19 @@ static void USART3_Config(void)
 
 	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE); // Se habilitan las interrupciones cuando se recibe un dato.
 }
+
+void activar_alarma(void){
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+	/* Set alarm B each 20th day in a month */
+	/* Alarm will be first triggered 10 seconds later as time is configured for RTC */
+	AlarmTime.hours = datatime.hours;
+	AlarmTime.minutes = datatime.minutes+1;
+	AlarmTime.seconds = datatime.seconds;
+	AlarmTime.day = datatime.day;
+	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
+	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
+}
+
 
 void USART3_IRQHandler(void) {
 	/*	Handler USART3_IRQHandler
@@ -894,6 +957,30 @@ void USART3_IRQHandler(void) {
 	}
 }
 
+void TM_RTC_AlarmBHandler(void) {
+	/* If user needs this function, then they should be defined separatelly in your project */
+	if(sistema.contador_alarma <= 2){
+		sistema.contador_alarma++;
+		enviar_comando("ALARMA B ACTIVADA\r\n");
+		TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+		/* Set alarm B each 20th day in a month */
+		/* Alarm will be first triggered 10 seconds later as time is configured for RTC */
+		AlarmTime.hours = datatime.hours;
+		AlarmTime.minutes = datatime.minutes+1;
+		AlarmTime.seconds = datatime.seconds;
+		AlarmTime.day = datatime.day;
+		AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
+		TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
+	}
+	else{
+		/* Set RTC alarm B, time in binary format */
+		sistema.contador_alarma = 0;
+		enviar_comando("ALARMA B DESCTIVADA\r\n");
+		TM_RTC_DisableAlarm(TM_RTC_Alarm_B);
+	}
+	/* Disable Alarm so it will not trigger next month at the same date and time */
+		//TM_RTC_DisableAlarm(TM_RTC_Alarm_B);
+}
 
 
 
