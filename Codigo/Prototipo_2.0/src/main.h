@@ -36,6 +36,8 @@
 #include "stm32_ub_lcd_2x16.h" // Inclusion de la libreria para manejar el LCD
 #include <rtc.h>
 #include "stm32_ub_fatfs.h" // Libreria de fatfs.
+#include "fan.h"
+#include "ventana.h"
 
 
 // Variables globales.
@@ -171,8 +173,8 @@ TM_RTC_t datatime;
 
 // Prototipos de funciones.
 void inicializar_leds(void);
-void inicializar_fan(void);
 void inicializar_calentador(void);
+void inicializar_ventana(void);
 void inicializar_bomba(void);
 void task_manager(void);
 void dht_interior_task(void);

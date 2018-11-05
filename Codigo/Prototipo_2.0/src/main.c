@@ -14,12 +14,14 @@ int main(void){
 
 	UB_LCD_2x16_Init(); // Inicializacion del display.
 	inicializar_leds();
-	inicializar_fan();
+	inicializar_ventana();
 	inicializar_calentador();
 	inicializar_bomba();
 	adc_inicializar();
 	TIM5_Start(); // Inicializa el timer del DHT.
+	TIM3_Start(); // Inicializa el timer para el motor paso a paso.
 	USART3_Config();
+
 
 	TM_RTC_Init(TM_RTC_ClockSource_External); // Se inicializa el RTC.
 	TM_RTC_Interrupts(TM_RTC_Int_1s); //Se activan las interrupciones del RTC.
@@ -36,31 +38,31 @@ int main(void){
 	sistema.flag.modo_monitor_serial = 0;
 
 
-//	// Check ob Medium eingelegt ist
-//	  if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
-//			//GPIO_SetBits(GPIOD,GPIO_Pin_13);
-//		// Media mounten
-//	    if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
-//	    	//GPIO_SetBits(GPIOD,GPIO_Pin_12);
-//	      // File zum schreiben im root neu anlegen
-//	      if(UB_Fatfs_OpenFile(&myFile, "0:/UB_File.txt", F_WR_NEW)==FATFS_OK) {
-//	    	// ein paar Textzeilen in das File schreiben
-//	        UB_Fatfs_WriteString(&myFile,"Test der WriteString-Funktion");
-//	        UB_Fatfs_WriteString(&myFile,"hier Zeile wacho");
-//	        UB_Fatfs_WriteString(&myFile,"ENDE");
-//	        // File schliessen
-//	        UB_Fatfs_CloseFile(&myFile);
-//	        GPIO_SetBits(GPIOD,GPIO_Pin_14);
-//	      }
-//	      // Media unmounten
-//	   	  UB_Fatfs_UnMount(MMC_0);
-//	    }
-//	  }else{
-//			GPIO_SetBits(GPIOD,GPIO_Pin_15);
-//	  }
+	//	// Check ob Medium eingelegt ist
+	//	  if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+	//			//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+	//		// Media mounten
+	//	    if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+	//	    	//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+	//	      // File zum schreiben im root neu anlegen
+	//	      if(UB_Fatfs_OpenFile(&myFile, "0:/UB_File.txt", F_WR_NEW)==FATFS_OK) {
+	//	    	// ein paar Textzeilen in das File schreiben
+	//	        UB_Fatfs_WriteString(&myFile,"Test der WriteString-Funktion");
+	//	        UB_Fatfs_WriteString(&myFile,"hier Zeile wacho");
+	//	        UB_Fatfs_WriteString(&myFile,"ENDE");
+	//	        // File schliessen
+	//	        UB_Fatfs_CloseFile(&myFile);
+	//	        GPIO_SetBits(GPIOD,GPIO_Pin_14);
+	//	      }
+	//	      // Media unmounten
+	//	   	  UB_Fatfs_UnMount(MMC_0);
+	//	    }
+	//	  }else{
+	//			GPIO_SetBits(GPIOD,GPIO_Pin_15);
+	//	  }
 
-	  tarjeta_sd.flag.fallo_abrir_archivo = 0;
-	  cargar_datos(); // Se cargan los datos por default.
+	tarjeta_sd.flag.fallo_abrir_archivo = 0;
+	cargar_datos(); // Se cargan los datos por default.
 
 	while(1){
 		task_manager();
@@ -79,63 +81,63 @@ void task_scheduler(void){
 	 */
 
 	//	// Rutina DHT
-		if(dht_interior.flag){
-			if(dht_interior.timeout >= 1){
-				dht_interior.timeout--;
-			}
-
-			if(dht_interior.timeout <= 0){
-				dht_interior.flag_timeout = 1;
-			}
+	if(dht_interior.flag){
+		if(dht_interior.timeout >= 1){
+			dht_interior.timeout--;
 		}
 
-		if(dht_interior.contador >= 1){
-			dht_interior.contador--;
+		if(dht_interior.timeout <= 0){
+			dht_interior.flag_timeout = 1;
 		}
-		else{
-			dht_interior.flag = 1;
-			dht_interior.contador = 2000;
-			dht_interior.flag_timeout = 0;
-			dht_interior.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
+	}
+
+	if(dht_interior.contador >= 1){
+		dht_interior.contador--;
+	}
+	else{
+		dht_interior.flag = 1;
+		dht_interior.contador = 2000;
+		dht_interior.flag_timeout = 0;
+		dht_interior.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
+	}
+
+	if(dht_exterior.flag){
+		if(dht_exterior.timeout >= 1){
+			dht_exterior.timeout--;
 		}
 
-		if(dht_exterior.flag){
-			if(dht_exterior.timeout >= 1){
-				dht_exterior.timeout--;
-			}
+		if(dht_exterior.timeout <= 0){
+			dht_exterior.flag_timeout = 1;
+		}
+	}
 
-			if(dht_exterior.timeout <= 0){
-				dht_exterior.flag_timeout = 1;
-			}
-		}
-
-		if(dht_exterior.contador >= 1){
-			dht_exterior.contador--;
-		}
-		else{
-			dht_exterior.flag = 1;
-			dht_exterior.contador = 2000;
-			dht_exterior.flag_timeout = 0;
-			dht_exterior.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
-		}
+	if(dht_exterior.contador >= 1){
+		dht_exterior.contador--;
+	}
+	else{
+		dht_exterior.flag = 1;
+		dht_exterior.contador = 2000;
+		dht_exterior.flag_timeout = 0;
+		dht_exterior.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
+	}
 	//
-		// Rutina LDR
-		if(ldr.contador >= 1){
-			ldr.contador--;
-		}
-		else{
-			ldr.flag.fin_contador = 1;
-			ldr.contador = 100;
-		}
+	// Rutina LDR
+	if(ldr.contador >= 1){
+		ldr.contador--;
+	}
+	else{
+		ldr.flag.fin_contador = 1;
+		ldr.contador = 100;
+	}
 
-		// Ruitna YL-69
-		if(yl.contador >= 1){
-			yl.contador--;
-		}
-		else{
-			yl.flag = 1;
-			yl.contador = 500;
-		}
+	// Ruitna YL-69
+	if(yl.contador >= 1){
+		yl.contador--;
+	}
+	else{
+		yl.flag = 1;
+		yl.contador = 500;
+	}
 
 	// Rutina del LED.
 	if(led.contador >= 1){
@@ -173,13 +175,13 @@ void task_scheduler(void){
 		serial.flag.mostrar_valores = 1;
 	}
 
-//	if(cultivo.contador_aux >= 1){
-//		cultivo.contador_aux--;
-//	}
-//	else{
-//		cultivo.flag.fin_contador = 1;
-//		cultivo.contador_aux = 10e3;
-//	}
+	//	if(cultivo.contador_aux >= 1){
+	//		cultivo.contador_aux--;
+	//	}
+	//	else{
+	//		cultivo.flag.fin_contador = 1;
+	//		cultivo.contador_aux = 10e3;
+	//	}
 }
 
 void inicializar_leds(){
@@ -206,7 +208,20 @@ void inicializar_leds(){
 
 }
 
-void inicializar_fan(){
+void inicializar_ventana()
+{
+	GPIO_InitTypeDef GPIOA_Stepper;
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+
+	GPIOA_Stepper.GPIO_Mode = GPIO_Mode_OUT;
+	GPIOA_Stepper.GPIO_OType = GPIO_OType_PP;
+	GPIOA_Stepper.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_3;
+	GPIOA_Stepper.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIOA_Stepper.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA,&GPIOA_Stepper);
+}
+
+void inicializar_calentador(){
 	/*	Funcion inicializar_leds()
 	 *	No recive ni devuelve un valor.
 	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
@@ -218,63 +233,39 @@ void inicializar_fan(){
 	//Inicializacion de los leds.
 	//
 
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 
-	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_14;
+	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_4;
 	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
 	GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
 	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
 	GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
 
-	GPIO_Init(GPIOD,&GPIO_Init_Pins); // Carga de la estrucura de datos.
-
-}
-
-void inicializar_calentador(){
-	/*	Funcion inicializar_leds()
-		 *	No recive ni devuelve un valor.
-		 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
-		 */
-
-		GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
-
-		//
-		//Inicializacion de los leds.
-		//
-
-		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-
-		GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_4;
-		GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
-		GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
-		GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
-		GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
-
-		GPIO_Init(GPIOC,&GPIO_Init_Pins); // Carga de la estrucura de datos.
+	GPIO_Init(GPIOC,&GPIO_Init_Pins); // Carga de la estrucura de datos.
 
 }
 
 void inicializar_bomba(){
 	/*	Funcion inicializar_leds()
-		 *	No recive ni devuelve un valor.
-		 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
-		 */
+	 *	No recive ni devuelve un valor.
+	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
+	 */
 
-		GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
+	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
 
-		//
-		//Inicializacion de los leds.
-		//
+	//
+	//Inicializacion de los leds.
+	//
 
-		RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 
-		GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_5;
-		GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
-		GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
-		GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
-		GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
+	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_5;
+	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
+	GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
+	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
+	GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
 
-		GPIO_Init(GPIOC,&GPIO_Init_Pins); // Carga de la estrucura de datos.
+	GPIO_Init(GPIOC,&GPIO_Init_Pins); // Carga de la estrucura de datos.
 
 }
 
@@ -300,15 +291,15 @@ void task_manager(void){
 		led_task();
 	}
 
-//	// Si hay una plantacion activa, se controla la temperatura.
-//	if(cultivo.flag.fin_contador){
-//		check_cultivo_task();
-//		cultivo.flag.fin_contador = 0;
-//	}
-//
-//	if(cultivo.flag.control_activo){
-//		control_temp_task();
-//	}
+	//	// Si hay una plantacion activa, se controla la temperatura.
+	//	if(cultivo.flag.fin_contador){
+	//		check_cultivo_task();
+	//		cultivo.flag.fin_contador = 0;
+	//	}
+	//
+	//	if(cultivo.flag.control_activo){
+	//		control_temp_task();
+	//	}
 }
 
 void dht_interior_task(){
@@ -389,7 +380,7 @@ void display_task(){
 	if(display.flag){
 
 		if(!sistema.flag.conexion_serial){
-//			char buffer[16];
+			//			char buffer[16];
 
 			if(display.estado <3){
 				display.estado++;
@@ -463,17 +454,19 @@ void control_temp_task(){
 		// Si se tiene una diferencia de temperatura razonable entre el interior y el exterior se puede abrir la ventana.
 
 		if(dht_interior.temperatura >= control.max_temp_fan){
-			GPIO_SetBits(GPIOD,GPIO_Pin_14); // Se enciende el fan y la ventana.
+			encender_ventilador(); // Se enciende el fan y abre la ventana.
+			abrir_ventana();
 		}
 		else if(dht_exterior.temperatura <= control.min_temp_fan){
-			GPIO_ResetBits(GPIOD,GPIO_Pin_14);
+			apagar_ventilador(); // Se apaga el fan y se cierra la ventana.
+			cerrar_ventana();
 		}
 
 		if(dht_interior.temperatura <= control.max_temp_calentador){
-			GPIO_SetBits(GPIOD,GPIO_Pin_12); // Se enciende el calentador.
+			GPIO_SetBits(GPIOD,GPIO_Pin_12);   // Se enciende el calentador.
 		}
 		else if(dht_exterior.temperatura >= control.min_temp_calentador){
-			GPIO_ResetBits(GPIOD,GPIO_Pin_12);
+			GPIO_ResetBits(GPIOD,GPIO_Pin_12); // Se apaga el calentador.
 		}
 
 	}
@@ -680,7 +673,7 @@ void cargar_datos(){
 		}
 	}
 
-	 //cultivo activo?
+	//cultivo activo?
 	if(!tarjeta_sd.flag.fallo_abrir_archivo && (estado_cultivo == -1 || etapa_actual == -1)){ // Se comprueba que los datos hayan sido leidos.
 		// Se manda el msj de error.
 		tarjeta_sd.flag.fallo_abrir_archivo = 1;
@@ -690,29 +683,29 @@ void cargar_datos(){
 		cultivo.flag.control_activo = estado_cultivo;
 		cultivo.etapa_actual = etapa_actual;
 		switch(tipo_cultivo){
-			case 0:strcpy(cultivo.nombre,"TOMATE");;break;
-			case 1:strcpy(cultivo.nombre,"MORRON");;break;
-			case 2:strcpy(cultivo.nombre,"CUSTOM");;break;
-			default:strcpy(cultivo.nombre,"");;break;
+		case 0:strcpy(cultivo.nombre,"TOMATE");;break;
+		case 1:strcpy(cultivo.nombre,"MORRON");;break;
+		case 2:strcpy(cultivo.nombre,"CUSTOM");;break;
+		default:strcpy(cultivo.nombre,"");;break;
 		}
 
-//		if(!strcmp(nombre_cultivo,"TOMATE")){
-//			//Configurar tomate
-//			strcpy(cultivo.nombre,nombre_cultivo);
-//		}
-//		else if(!strcmp(nombre_cultivo,"MORRON")){
-//			//Configurar morron
-//			strcpy(cultivo.nombre,nombre_cultivo);
-//		}
-//		else if(!strcmp(nombre_cultivo,"CUSTOM")){
-//			//Configurar custom
-//			strcpy(cultivo.nombre,nombre_cultivo);
-//		}
+		//		if(!strcmp(nombre_cultivo,"TOMATE")){
+		//			//Configurar tomate
+		//			strcpy(cultivo.nombre,nombre_cultivo);
+		//		}
+		//		else if(!strcmp(nombre_cultivo,"MORRON")){
+		//			//Configurar morron
+		//			strcpy(cultivo.nombre,nombre_cultivo);
+		//		}
+		//		else if(!strcmp(nombre_cultivo,"CUSTOM")){
+		//			//Configurar custom
+		//			strcpy(cultivo.nombre,nombre_cultivo);
+		//		}
 	}
 }
-	// cual?
+// cual?
 
-	//configurar_cultivo_tomate();
+//configurar_cultivo_tomate();
 
 
 int fecha_valida(TM_RTC_t fecha_control){
@@ -979,7 +972,7 @@ void TM_RTC_AlarmBHandler(void) {
 		TM_RTC_DisableAlarm(TM_RTC_Alarm_B);
 	}
 	/* Disable Alarm so it will not trigger next month at the same date and time */
-		//TM_RTC_DisableAlarm(TM_RTC_Alarm_B);
+	//TM_RTC_DisableAlarm(TM_RTC_Alarm_B);
 }
 
 
