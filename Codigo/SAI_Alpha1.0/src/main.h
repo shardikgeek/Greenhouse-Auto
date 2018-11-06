@@ -101,9 +101,10 @@ struct{
 
 	TM_RTC_AlarmTime_t etapa[NUMERO_ETAPAS];
 	uint8_t etapa_actual;
+	uint8_t tipo;
 	uint16_t contador; // Contador para disparar eventos.
 	uint16_t contador_aux; // Contador para chequear cultivo.
-	char nombre[16];
+	char nombre[16]; // (Se puede eliminar despues y usar tipo).
 	temperaturas variables[NUMERO_ETAPAS];
 	struct{
 		uint8_t limite_delta_temp; // Limite maximo entre la temperatura exterior e interior.
@@ -115,6 +116,7 @@ struct{
 	struct {
 		unsigned int control_activo : 1;
 		unsigned int fin_contador : 1;
+		unsigned int cambio_etapa : 1;
 	}flag;
 }cultivo;
 
@@ -194,6 +196,7 @@ static void USART3_Config(void);
 void enviar_comando(char *cmd);
 void activar_alarma(void);
 void backup_etapas(void);
+void log_etapas(void);
 
 
 

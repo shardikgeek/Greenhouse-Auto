@@ -298,7 +298,15 @@ void task_manager(void){
 	// Otras tareas.
 	if(!sistema.flag.conexion_serial){ // Se realizan las tareas si no se esta conectado al serial
 		led_task();
+
+		// Si se cambia de etapa se cambia el archivo de log.
+		if(cultivo.flag.cambio_etapa){
+			log_etapas();
+			cultivo.flag.cambio_etapa = 0;
+		}
 	}
+
+
 
 //	// Si hay una plantacion activa, se controla la temperatura.
 //	if(cultivo.flag.fin_contador){
@@ -521,9 +529,9 @@ void serial_task(void){
 			enviar_comando(":OKK,-,-!\r\n");
 			configurar_cultivo_tomate();
 		}
-		if(!strcmp(serial.comando,"ALR") && sistema.flag.conexion_serial){
+		if(!strcmp(serial.comando,"LOG") && sistema.flag.conexion_serial){
 			enviar_comando(":OKK,-,-!\r\n");
-			activar_alarma();
+			log_etapas();
 		}
 		// Comado SDC SD card Coneccted, se chequea si se puede montar la tarjeta.
 		if(!strcmp(serial.comando,"SDC") && sistema.flag.conexion_serial){
@@ -782,8 +790,10 @@ void configurar_cultivo_tomate(void){
 	cultivo.variables[2].min_temp_fan = 20;
 //
 	strcpy(cultivo.nombre,"Tomate");
+	cultivo.tipo = 0;
 
 	cultivo.flag.control_activo = 1;
+	cultivo.flag.cambio_etapa = 1;
 //
 //	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
 //
@@ -885,6 +895,7 @@ void backup_etapas(void){
 	FIL myFile;   // Filehandler
 	char temp_string[3][100];
 
+	// Se guardan los horarios de las etapas.
 	sprintf(temp_string[0],"-,ETAPA 0, HOURS %d, MINUTES %d, SECONDS %d, DAY %d",
 			cultivo.etapa[0].hours,cultivo.etapa[0].minutes,cultivo.etapa[0].seconds, cultivo.etapa[0].day);
 	sprintf(temp_string[1],",ETAPA 1, HOURS %d, MINUTES %d, SECONDS %d, DAY %d",
@@ -916,6 +927,38 @@ void backup_etapas(void){
 		GPIO_SetBits(GPIOD,GPIO_Pin_15);
 	}
 
+}
+
+void log_etapas(void){
+	FIL myFile;   // Filehandler
+	char temp_string[70];
+	enviar_comando("ADENTRO\r\n");
+	sprintf(temp_string,"-,CULTIVO_ACTIVO %d, ETAPA_CULTIVO %d, TIPO_CULTIVO %d.",cultivo.flag.control_activo,cultivo.etapa_actual, cultivo.tipo);
+
+	// Check ob Medium eingelegt ist
+	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+		// Media mounten
+		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+			// File zum schreiben im root neu anlegen
+			if(UB_Fatfs_OpenFile(&myFile, "0:/Log.txt", F_WR_CLEAR)==FATFS_OK) {
+				// ein paar Textzeilen in das File schreiben
+				UB_Fatfs_WriteString(&myFile,temp_string);
+				// File schliessen
+				UB_Fatfs_CloseFile(&myFile);
+				enviar_comando("CHLOG\r\n");
+				GPIO_SetBits(GPIOD,GPIO_Pin_15);
+			}
+			else{
+				enviar_comando("FALLO\r\n");
+			}
+			// Media unmounten
+			UB_Fatfs_UnMount(MMC_0);
+		}
+	}else{
+		GPIO_SetBits(GPIOD,GPIO_Pin_12);
+	}
 }
 
 void USART3_IRQHandler(void) {
@@ -994,6 +1037,7 @@ void TM_RTC_AlarmBHandler(void) {
 	if(cultivo.etapa_actual < 2){
 		enviar_comando("Cambiando etapa...\r\n");
 		cultivo.etapa_actual++;
+		cultivo.flag.cambio_etapa = 1; // Se avisa el cambio de etapa para cambiar el archivo de log.
 		AlarmTime.hours = cultivo.etapa[cultivo.etapa_actual].hours;
 		AlarmTime.minutes = cultivo.etapa[cultivo.etapa_actual].minutes;
 		AlarmTime.seconds = cultivo.etapa[cultivo.etapa_actual].seconds;
@@ -1005,6 +1049,7 @@ void TM_RTC_AlarmBHandler(void) {
 		/* Set RTC alarm B, time in binary format */
 		cultivo.etapa_actual = 0;
 		cultivo.flag.control_activo = 0;
+		cultivo.flag.cambio_etapa = 1; // Se avisa el cambio de etapa para cambiar el archivo de log.
 		enviar_comando("ALARMA B DESCTIVADA\r\n");
 		TM_RTC_DisableAlarm(TM_RTC_Alarm_B);
 	}
