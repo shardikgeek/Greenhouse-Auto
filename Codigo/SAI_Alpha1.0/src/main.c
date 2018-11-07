@@ -60,7 +60,8 @@ int main(void){
 //	  }
 
 	  tarjeta_sd.flag.fallo_abrir_archivo = 0;
-	  cargar_datos(); // Se cargan los datos por default.
+	  //cargar_datos(); // Se cargan los datos por default.
+	  cultivo.flag.control_activo = 0;
 
 	while(1){
 		task_manager();
@@ -497,13 +498,17 @@ void serial_task(void){
 		if(!strcmp(serial.comando,"SKR") && sistema.flag.conexion_serial){
 			// Muestra si se pudo leer la tarjeta SD.
 			enviar_comando(":OKK,-,-! ");
+			cargar_datos();
 			if(tarjeta_sd.flag.fallo_abrir_archivo){
 				enviar_comando(":SD,4,FAIL!\r\n");
 			}
 			else{
-				enviar_comando(":SD,2,OK!");
-				sprintf(msj,"NOMBRE: %s.ESTADO_CULTIVO: %d.ETAPA_CULTIVO: %d.",cultivo.nombre,cultivo.flag.control_activo,cultivo.etapa_actual);
+				enviar_comando(":SD,2,OK!\r\n");
+				sprintf(msj,"TIPO_CULTIVO: %d.ESTADO_CULTIVO: %d.ETAPA_CULTIVO: %d.",cultivo.tipo,cultivo.flag.control_activo,cultivo.etapa_actual);
 				enviar_comando(msj);
+				enviar_comando("\r\n");
+				enviar_comando(mensaje_global);
+				strcpy(mensaje_global,"");
 				enviar_comando("\r\n");
 			}
 		}
@@ -578,33 +583,27 @@ void cargar_datos(){
 	 * 	De momento los valores se toman de unos arreglos ya predefinidos, la idea es que sean leidos por memoria externa.
 	 */
 	FIL myFile;   // Filehandler
-	char temp_string[53];
+	char temp_string[250];
+	//char string[6] = "Hola";
 	char *temp;
 	uint8_t estado_cultivo = -1;
 	uint8_t etapa_actual = -1;
 	uint8_t tipo_cultivo = -1;
+	uint8_t etapa_temp = 0;
+	TM_RTC_t backup[3];
+	uint32_t cant_bytes_archivo = 0;
 
-
-	//Temperaturas por defecto.
-	control.limite_delta_temp = 5;
-	control.max_temp_fan = 26;
-	control.min_temp_fan = 25;
-	control.max_temp_calentador = 18;
-	control.min_temp_calentador = 17;
-	control.flag.bomba_encendida = 0;
-	control.flag.fan_encendido = 0;
-	control.flag.calentador_encendido = 0;
-
-	// leer sd.
+	// se lee el archivo LOG de la sd.
 	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
 		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
 		// Media mounten
 		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
 			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
 			// File zum schreiben im root neu anlegen
-			if(UB_Fatfs_OpenFile(&myFile, "0:/UB_File.txt", F_RD)==FATFS_OK) {
+			if(UB_Fatfs_OpenFile(&myFile, "0:/LOG.txt", F_RD)==FATFS_OK) {
 				// ein paar Textzeilen in das File schreiben
-				if(UB_Fatfs_ReadString(&myFile,temp_string,52) == FATFS_OK){
+				cant_bytes_archivo = UB_Fatfs_FileSize(&myFile);
+				if(UB_Fatfs_ReadString(&myFile,temp_string,cant_bytes_archivo) == FATFS_OK){
 					tarjeta_sd.flag.fallo_abrir_archivo = 0;
 					//strcpy(tarjeta_sd.lectura,temp_string);
 
@@ -640,34 +639,142 @@ void cargar_datos(){
 		}
 	}
 
-	 //cultivo activo?
-	if(!tarjeta_sd.flag.fallo_abrir_archivo && (estado_cultivo == -1 || etapa_actual == -1)){ // Se comprueba que los datos hayan sido leidos.
-		// Se manda el msj de error.
-		tarjeta_sd.flag.fallo_abrir_archivo = 1;
 
-	}
-	else if(!tarjeta_sd.flag.fallo_abrir_archivo && (estado_cultivo != -1 && etapa_actual != -1)){
-		cultivo.flag.control_activo = estado_cultivo;
-		cultivo.etapa_actual = etapa_actual;
-		switch(tipo_cultivo){
-			case 0:strcpy(cultivo.nombre,"TOMATE");;break;
-			case 1:strcpy(cultivo.nombre,"MORRON");;break;
-			case 2:strcpy(cultivo.nombre,"CUSTOM");;break;
-			default:strcpy(cultivo.nombre,"");;break;
+	if(estado_cultivo != -1 && etapa_actual != -1 && tipo_cultivo != -1){ // Se comprueba que el archivo este correcto.
+
+		if(estado_cultivo == 1){ // Si el seguimiento estuvo activo se obtienen las fechas de las etapas.
+
+			// Se lee el archivo ETAPAS de la SD.
+			if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+				//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+				// Media mounten
+				if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+					//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+					// File zum schreiben im root neu anlegen
+					if(UB_Fatfs_OpenFile(&myFile, "0:/ETAPAS.txt", F_RD)==FATFS_OK) {
+						// ein paar Textzeilen in das File schreiben
+						cant_bytes_archivo = UB_Fatfs_FileSize(&myFile);
+						if(UB_Fatfs_ReadString(&myFile,temp_string,cant_bytes_archivo) == FATFS_OK){
+							tarjeta_sd.flag.fallo_abrir_archivo = 0;
+							//strcpy(tarjeta_sd.lectura,temp_string);
+
+							///////////////Codigo que interpreta el texto////////////
+							temp = strtok(temp_string," ,.-");
+
+							while(temp != NULL){
+								if(!strcmp("ETAPA",temp)){
+									temp = strtok(NULL," ,.-");
+									etapa_temp = atoi(temp);
+								}
+								else if(!strcmp("YEAR",temp)){
+									temp = strtok(NULL," ,.-");
+									backup[etapa_temp].year = atoi(temp);
+								}
+								else if(!strcmp("MONTH",temp)){
+									temp = strtok(NULL," ,.-");
+									backup[etapa_temp].month = atoi(temp);
+								}
+								else if(!strcmp("HOURS",temp)){
+									temp = strtok(NULL," ,.-");
+									backup[etapa_temp].hours = atoi(temp);
+								}
+								else if(!strcmp("MINUTES",temp)){
+									temp = strtok(NULL," ,.-");
+									backup[etapa_temp].minutes = atoi(temp);
+								}
+								else if(!strcmp("SECONDS",temp)){
+									temp = strtok(NULL," ,.-");
+									backup[etapa_temp].seconds = atoi(temp);
+								}
+								else if(!strcmp("DAY",temp)){
+									temp = strtok(NULL," ,.-");
+									backup[etapa_temp].date = atoi(temp);
+								}
+
+								temp = strtok(NULL," ,.-");
+
+							}
+							/////////////////////////////////////////////////////////
+						}
+						else{
+							tarjeta_sd.flag.fallo_abrir_archivo = 1;
+						}
+						// File schliessen
+						UB_Fatfs_CloseFile(&myFile);
+					}
+					// Media unmounten
+					UB_Fatfs_UnMount(MMC_0);
+				}
+			}
+
+			sprintf(mensaje_global,"Etapa %d, YEAR: %d, MONTH %d, HOURS %d, MINUTES %d, SECONDS %d, DAY %d.\r\n", 2,backup[2].year,backup[2].month,backup[2].hours,backup[2].minutes, backup[2].seconds, backup[2].date);
+			// Se lee el archivo ETAPAS
+			//			sprintf(mensaje_global,"Wacho");
+
+			// Se comprueba si la ultima fecha es valida (por lo tanto todas son validas)
+			if(fecha_valida(backup[2])){
+				// Se comprueba que la ultima etapa seteada este en una fecha valida, sino se activa la etapa siguiente y asi hasta
+				// llegar a una etapa valida.
+				//sprintf(mensaje_global,"Fecha valida.");
+
+				while(!fecha_valida(backup[etapa_actual]) && etapa_actual < 3){
+					etapa_actual+=1;
+				}
+
+				sprintf(mensaje_global,"La etapa seleccionada: %d.", etapa_actual);
+
+				// Se configura la etapa valida.
+
+				cultivo.etapa[0].year = backup[0].year;
+				cultivo.etapa[0].month = backup[0].month;
+				cultivo.etapa[0].hours = backup[0].hours;
+				cultivo.etapa[0].minutes = backup[0].minutes;
+				cultivo.etapa[0].seconds = backup[0].seconds;
+				cultivo.etapa[0].date = backup[0].date;
+
+				cultivo.etapa[1].year = backup[1].year;
+				cultivo.etapa[1].month = backup[1].month;
+				cultivo.etapa[1].hours = backup[1].hours;
+				cultivo.etapa[1].minutes = backup[1].minutes;
+				cultivo.etapa[1].seconds = backup[1].seconds;
+				cultivo.etapa[1].date = backup[1].date;
+
+				cultivo.etapa[2].year = backup[2].year;
+				cultivo.etapa[2].month = backup[2].month;
+				cultivo.etapa[2].hours = backup[2].hours;
+				cultivo.etapa[2].minutes = backup[2].minutes;
+				cultivo.etapa[2].seconds = backup[2].seconds;
+				cultivo.etapa[2].date = backup[2].date;
+
+				AlarmTime.hours = cultivo.etapa[etapa_actual].hours;
+				AlarmTime.minutes = cultivo.etapa[etapa_actual].minutes;
+				AlarmTime.seconds = cultivo.etapa[etapa_actual].seconds;
+				AlarmTime.day = cultivo.etapa[etapa_actual].date;
+				AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
+				TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
+
+				cultivo.flag.control_activo = estado_cultivo;
+				cultivo.etapa_actual = etapa_actual;
+				cultivo.tipo = tipo_cultivo;
+
+			}
+			else{
+				// Si la fecha no es valida se suspende el seguimiento.
+				sprintf(mensaje_global,"Fecha invalida.");
+				cultivo.flag.control_activo = 0;
+				cultivo.etapa_actual = 0;
+			}
+			// Se comprueba que la ultima etapa seteada este en una fecha valida, sino se activa la etapa siguiente y asi hasta
+			// llegar a una etapa valida.
+
+			// Se configura la etapa valida.
+		}
+		else{ // Si el seguimiento estuvo desactivado se modifican las banderas necesarias.
+			sprintf(mensaje_global,"FALLO");
+			cultivo.flag.control_activo = 0;
+			cultivo.etapa_actual = 0;
 		}
 
-//		if(!strcmp(nombre_cultivo,"TOMATE")){
-//			//Configurar tomate
-//			strcpy(cultivo.nombre,nombre_cultivo);
-//		}
-//		else if(!strcmp(nombre_cultivo,"MORRON")){
-//			//Configurar morron
-//			strcpy(cultivo.nombre,nombre_cultivo);
-//		}
-//		else if(!strcmp(nombre_cultivo,"CUSTOM")){
-//			//Configurar custom
-//			strcpy(cultivo.nombre,nombre_cultivo);
-//		}
 	}
 }
 	// cual?
@@ -680,6 +787,8 @@ int fecha_valida(TM_RTC_t fecha_control){
 	 * 	Funcion encargada de retornar si la fecha ingresada en una etapa es valida o no.
 	 * 	Si la fecha se encuentra en el pasado es rechazada, si es del futuro se acepta.
 	 */
+
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
 
 	if(fecha_control.year < datatime.year){
 		return 0;
@@ -715,18 +824,21 @@ void configurar_cultivo_tomate(void){
 	//
 	//Se fijan las alarmas y luego se las guarda en la tarjeta SD como backup.
 	//
+	cultivo.etapa[0].year = datatime.year;
+	cultivo.etapa[0].month = datatime.month;
 	cultivo.etapa[0].hours = datatime.hours;
 	cultivo.etapa[0].minutes = datatime.minutes+1;
 	cultivo.etapa[0].seconds = datatime.seconds;
-	cultivo.etapa[0].day = datatime.day;
+	cultivo.etapa[0].date = datatime.date;
 	// Se asegura que la fecha sea valida.
 //	if((datatime.day + 7) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
 //		cultivo.etapa[0].day = 7 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
 //	}
 //	else
 //		cultivo.etapa[0].day = datatime.day + 7;
-	cultivo.etapa[0].alarmtype = TM_RTC_AlarmType_DayInMonth;
 
+	cultivo.etapa[1].year = datatime.year;
+	cultivo.etapa[1].month = datatime.month;
 	cultivo.etapa[1].hours = datatime.hours;
 	cultivo.etapa[1].minutes = datatime.minutes+2;
 	cultivo.etapa[1].seconds = datatime.seconds;
@@ -736,20 +848,20 @@ void configurar_cultivo_tomate(void){
 //	}
 //	else
 //		cultivo.etapa[1].day = datatime.day + 14;
-	cultivo.etapa[1].day = datatime.day;
-	cultivo.etapa[1].alarmtype = TM_RTC_AlarmType_DayInMonth;
+	cultivo.etapa[1].date = datatime.date;
 
+	cultivo.etapa[2].year = datatime.year;
+	cultivo.etapa[2].month = datatime.month;
 	cultivo.etapa[2].hours = datatime.hours;
 	cultivo.etapa[2].minutes = datatime.minutes+3;
 	cultivo.etapa[2].seconds = datatime.seconds;
-	cultivo.etapa[2].day = datatime.day;
+	cultivo.etapa[2].date = datatime.date;
 	// Se asegura que la fecha sea valida.
 //	if((datatime.day + 21) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
 //		cultivo.etapa[2].day = 21 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
 //	}
 //	else
 //		cultivo.etapa[2].day = datatime.day + 21;
-	cultivo.etapa[2].alarmtype = TM_RTC_AlarmType_DayInMonth;
 
 	//
 	//  Se guardan los valores de las etapas en la SD
@@ -766,7 +878,7 @@ void configurar_cultivo_tomate(void){
 	AlarmTime.hours = cultivo.etapa[0].hours;
 	AlarmTime.minutes = cultivo.etapa[0].minutes;
 	AlarmTime.seconds = cultivo.etapa[0].seconds;
-	AlarmTime.day = cultivo.etapa[0].day;
+	AlarmTime.day = cultivo.etapa[0].date;
 	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
 	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
 
@@ -896,12 +1008,12 @@ void backup_etapas(void){
 	char temp_string[3][100];
 
 	// Se guardan los horarios de las etapas.
-	sprintf(temp_string[0],"-,ETAPA 0, HOURS %d, MINUTES %d, SECONDS %d, DAY %d",
-			cultivo.etapa[0].hours,cultivo.etapa[0].minutes,cultivo.etapa[0].seconds, cultivo.etapa[0].day);
-	sprintf(temp_string[1],",ETAPA 1, HOURS %d, MINUTES %d, SECONDS %d, DAY %d",
-				cultivo.etapa[1].hours,cultivo.etapa[1].minutes,cultivo.etapa[1].seconds, cultivo.etapa[1].day);
-	sprintf(temp_string[2],",ETAPA 2, HOURS %d, MINUTES %d, SECONDS %d, DAY %d.",
-				cultivo.etapa[2].hours,cultivo.etapa[2].minutes,cultivo.etapa[2].seconds, cultivo.etapa[2].day);
+	sprintf(temp_string[0],"-,ETAPA 0, YEAR %d, MONTH %d, HOURS %d, MINUTES %d, SECONDS %d, DAY %d",
+			cultivo.etapa[0].year,cultivo.etapa[0].month,cultivo.etapa[0].hours,cultivo.etapa[0].minutes,cultivo.etapa[0].seconds, cultivo.etapa[0].date);
+	sprintf(temp_string[1],",ETAPA 1, YEAR %d, MONTH %d, HOURS %d, MINUTES %d, SECONDS %d, DAY %d",
+			cultivo.etapa[1].year,cultivo.etapa[1].month,cultivo.etapa[1].hours,cultivo.etapa[1].minutes,cultivo.etapa[1].seconds, cultivo.etapa[1].date);
+	sprintf(temp_string[2],",ETAPA 2, YEAR %d, MONTH %d, HOURS %d, MINUTES %d, SECONDS %d, DAY %d.",
+			cultivo.etapa[2].year,cultivo.etapa[2].month,cultivo.etapa[2].hours,cultivo.etapa[2].minutes,cultivo.etapa[2].seconds, cultivo.etapa[2].date);
 	//sprintf(temp_string,"%d", cultivo.etapa.hours[1]);
 
 	// Check ob Medium eingelegt ist
@@ -1041,7 +1153,7 @@ void TM_RTC_AlarmBHandler(void) {
 		AlarmTime.hours = cultivo.etapa[cultivo.etapa_actual].hours;
 		AlarmTime.minutes = cultivo.etapa[cultivo.etapa_actual].minutes;
 		AlarmTime.seconds = cultivo.etapa[cultivo.etapa_actual].seconds;
-		AlarmTime.day = cultivo.etapa[cultivo.etapa_actual].day;
+		AlarmTime.day = cultivo.etapa[cultivo.etapa_actual].date;
 		AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
 		TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
 	}

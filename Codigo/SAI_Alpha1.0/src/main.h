@@ -99,7 +99,7 @@ typedef struct{
 struct{
 	// Esta estructura contiene los datos del cultivo
 
-	TM_RTC_AlarmTime_t etapa[NUMERO_ETAPAS];
+	TM_RTC_t etapa[NUMERO_ETAPAS];
 	uint8_t etapa_actual;
 	uint8_t tipo;
 	uint16_t contador; // Contador para disparar eventos.
@@ -170,6 +170,7 @@ struct{
 
 TM_RTC_AlarmTime_t AlarmTime;
 TM_RTC_t datatime;
+char mensaje_global[100];
 
 // Prototipos de funciones.
 void inicializar_leds(void);
