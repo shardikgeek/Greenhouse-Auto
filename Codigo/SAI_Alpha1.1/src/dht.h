@@ -218,7 +218,7 @@ void leer_dht_interior(){
 
 	if (sum == (Rh_byte1+Rh_byte2+Temp_byte1+Temp_byte2))    // if the data is correct
 	{
-		sprintf(aux,"%d.%d",Temp_byte1,Temp_byte2); // Se crea una cadena con la temperatura.
+		sprintf(aux,"%d,%d",Temp_byte1,Temp_byte2); // Se crea una cadena con la temperatura.
 		strcpy(dht_interior.temperatura_string,aux); // Se guarda la temperatura en la estructura del dht.
 		dht_interior.temperatura = Temp_byte1 + Temp_byte2/10;
 		dht_interior.estado = STATE_DHT_CHECKSUM_GOOD; // Se cambia el estado del sensor.
@@ -372,7 +372,7 @@ void leer_dht_exterior(){
 
 	if (sum == (Rh_byte1+Rh_byte2+Temp_byte1+Temp_byte2))    // if the data is correct
 	{
-		sprintf(aux,"%d.%d",Temp_byte1,Temp_byte2); // Se crea una cadena con la temperatura.
+		sprintf(aux,"%d,%d",Temp_byte1,Temp_byte2); // Se crea una cadena con la temperatura.
 		strcpy(dht_exterior.temperatura_string,aux); // Se guarda la temperatura en la estructura del dht.
 		dht_exterior.temperatura = Temp_byte1 + Temp_byte2/10;;
 		dht_exterior.estado = STATE_DHT_CHECKSUM_GOOD; // Se cambia el estado del sensor.

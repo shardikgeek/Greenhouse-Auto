@@ -39,7 +39,6 @@
 #include "ventana.h"
 #include "fan.h"
 
-
 // Variables globales.
 struct{
 	uint32_t contador;
@@ -169,6 +168,7 @@ struct{
 		unsigned int modo_monitor_serial : 1;
 		unsigned int conf_correcta : 1;
 		unsigned int contador_alarma : 1;
+		unsigned int first_dat_temp_int : 1;
 	}flag;
 }sistema;
 
@@ -176,6 +176,20 @@ TM_RTC_AlarmTime_t AlarmTime;
 TM_RTC_t datatime;
 char mensaje_global[100];
 extern uint16_t vuelta;
+
+temperaturas tomate[3] = {
+	//{limite_delta_temp,max_temp_fan,min_temp_fan,min_temp_calentador,max_temp_calentador}
+	{5,20,18,14,17},
+	{5,21,19,15,18},
+	{5,22,20,16,19}
+};
+
+temperaturas zanahoria[3] = {
+	//{limite_delta_temp,max_temp_fan,min_temp_fan,min_temp_calentador,max_temp_calentador}
+	{1,2,3,4,5},
+	{6,7,8,9,10},
+	{11,12,13,14,15}
+};
 
 // Prototipos de funciones.
 void inicializar_leds(void);
@@ -205,6 +219,7 @@ void enviar_comando(char *cmd);
 void activar_alarma(void);
 void backup_etapas(void);
 void log_etapas(void);
+void datalogger(void);
 
 
 

@@ -65,12 +65,9 @@ int main(void){
 	//	  }
 
 	tarjeta_sd.flag.fallo_abrir_archivo = 0;
-	//cargar_datos(); // Se cargan los datos por default.
 	cultivo.flag.control_activo = 0;
+	cargar_datos(); // Se cargan los datos por default.
 
-	control.limite_delta_temp = 10;
-	control.max_temp_fan = 32;
-	control.min_temp_fan = 31;
 	control.flag.ventana_abierta = 0;
 	control.flag.fan_encendido = 0;
 
@@ -106,9 +103,9 @@ void task_scheduler(void){
 	}
 	else{
 		dht_interior.flag = 1;
-		dht_interior.contador = 2000;
+		dht_interior.contador = 2001;
 		dht_interior.flag_timeout = 0;
-		dht_interior.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
+		dht_interior.timeout = 1001; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
 	}
 
 	if(dht_exterior.flag){
@@ -126,9 +123,9 @@ void task_scheduler(void){
 	}
 	else{
 		dht_exterior.flag = 1;
-		dht_exterior.contador = 2000;
+		dht_exterior.contador = 2001;
 		dht_exterior.flag_timeout = 0;
-		dht_exterior.timeout = 1000; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
+		dht_exterior.timeout = 1001; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
 	}
 	//
 	// Rutina LDR
@@ -164,7 +161,7 @@ void task_scheduler(void){
 	}
 	else{
 		display.flag = 1;
-		display.contador = 2000;
+		display.contador = 2001;
 	}
 
 	// Rutina Serial.
@@ -181,17 +178,18 @@ void task_scheduler(void){
 		serial.contador_task--;
 	}
 	else if(sistema.flag.modo_monitor_serial){
-		serial.contador_task = 1000;
+		serial.contador_task = 1001;
 		serial.flag.mostrar_valores = 1;
 	}
 
-	//	if(cultivo.contador_aux >= 1){
-	//		cultivo.contador_aux--;
-	//	}
-	//	else{
-	//		cultivo.flag.fin_contador = 1;
-	//		cultivo.contador_aux = 10e3;
-	//	}
+	// Contador para chequear cultivo.
+	if(cultivo.contador_aux >= 1 && cultivo.flag.control_activo){
+		cultivo.contador_aux--;
+	}
+	else if(cultivo.flag.control_activo){
+		cultivo.flag.fin_contador = 1;
+		cultivo.contador_aux = 5e3 + 1;
+	}
 }
 
 void inicializar_leds(){
@@ -317,7 +315,6 @@ void task_manager(void){
 	yl69_task();
 	serial_task();
 	display_task(); 		// Manejo de la interfaz de usuario.
-	control_temp_task();
 	ventana_task();
 
 	// Otras tareas.
@@ -329,6 +326,15 @@ void task_manager(void){
 			log_etapas();
 			cultivo.flag.cambio_etapa = 0;
 		}
+	}
+
+	if(cultivo.flag.control_activo){
+		if(cultivo.flag.fin_contador){
+			datalogger();
+			cultivo.flag.fin_contador = 0;
+		}
+		control_temp_task();
+		//control_hum_task();
 	}
 
 
@@ -557,9 +563,8 @@ void serial_task(void){
 			enviar_comando(":OKK,-,-!\r\n");
 		}
 		if(!strcmp(serial.comando,"ATR") && sistema.flag.conexion_serial){
+			datalogger();
 			enviar_comando(":OKK,-,-!");
-			enviar_comando(" DHT: ");
-			enviar_comando(dht_interior.temperatura_string);
 		}
 		if(!strcmp(serial.comando,"SKR") && sistema.flag.conexion_serial){
 			// Muestra si se pudo leer la tarjeta SD.
@@ -600,6 +605,10 @@ void serial_task(void){
 			enviar_comando(":OKK,-,-!\r\n");
 			configurar_cultivo_tomate();
 		}
+		if(!strcmp(serial.comando,"ZAN") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			configurar_cultivo_zanahoria();
+		}
 		if(!strcmp(serial.comando,"LOG") && sistema.flag.conexion_serial){
 			enviar_comando(":OKK,-,-!\r\n");
 			log_etapas();
@@ -630,6 +639,11 @@ void serial_task(void){
 		}
 		if(!strcmp(serial.comando,"RELE") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
 			GPIO_ResetBits(GPIOC,GPIO_Pin_4);
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"VAR") && !strcmp(serial.datos,"TEMP") && sistema.flag.conexion_serial){
+			sprintf(msj,"VAR: %d,%d,%d\r\n",control.limite_delta_temp,control.max_temp_fan,control.min_temp_fan);
+			enviar_comando(msj);
 			enviar_comando(":OKK,-,-!\r\n");
 		}
 
@@ -841,6 +855,24 @@ void cargar_datos(){
 				cultivo.etapa[2].seconds = backup[2].seconds;
 				cultivo.etapa[2].date = backup[2].date;
 
+				// Se setean las variables de control de a cuerdo a la etapa actual.
+				if(cultivo.tipo == 0){
+					control.limite_delta_temp = tomate[cultivo.etapa_actual].limite_delta_temp;
+					control.max_temp_fan = tomate[cultivo.etapa_actual].max_temp_fan;
+					control.min_temp_fan = tomate[cultivo.etapa_actual].min_temp_fan;
+					control.max_temp_calentador = tomate[cultivo.etapa_actual].max_temp_calentador;
+					control.min_temp_calentador = tomate[cultivo.etapa_actual].min_temp_calentador;
+					strcpy(cultivo.nombre,"Tomate");
+				}
+				else if(cultivo.tipo == 1){
+					control.limite_delta_temp = zanahoria[cultivo.etapa_actual].limite_delta_temp;
+					control.max_temp_fan = zanahoria[cultivo.etapa_actual].max_temp_fan;
+					control.min_temp_fan = zanahoria[cultivo.etapa_actual].min_temp_fan;
+					control.max_temp_calentador = zanahoria[cultivo.etapa_actual].max_temp_calentador;
+					control.min_temp_calentador = zanahoria[cultivo.etapa_actual].min_temp_calentador;
+					strcpy(cultivo.nombre,"Zanahoria");
+				}
+
 				AlarmTime.hours = cultivo.etapa[etapa_actual].hours;
 				AlarmTime.minutes = cultivo.etapa[etapa_actual].minutes;
 				AlarmTime.seconds = cultivo.etapa[etapa_actual].seconds;
@@ -921,6 +953,95 @@ void configurar_cultivo_tomate(void){
 	//
 	cultivo.etapa[0].year = datatime.year;
 	cultivo.etapa[0].month = datatime.month;
+	cultivo.etapa[0].hours = datatime.hours+1;
+	cultivo.etapa[0].minutes = datatime.minutes;
+	cultivo.etapa[0].seconds = datatime.seconds;
+	cultivo.etapa[0].date = datatime.date;
+	// Se asegura que la fecha sea valida.
+	//	if((datatime.day + 7) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
+	//		cultivo.etapa[0].day = 7 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
+	//	}
+	//	else
+	//		cultivo.etapa[0].day = datatime.day + 7;
+
+	cultivo.etapa[1].year = datatime.year;
+	cultivo.etapa[1].month = datatime.month;
+	cultivo.etapa[1].hours = datatime.hours+2;
+	cultivo.etapa[1].minutes = datatime.minutes;
+	cultivo.etapa[1].seconds = datatime.seconds;
+	// Se asegura que la fecha sea valida.
+	//	if((datatime.day + 14) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
+	//		cultivo.etapa[1].day = 14 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
+	//	}
+	//	else
+	//		cultivo.etapa[1].day = datatime.day + 14;
+	cultivo.etapa[1].date = datatime.date;
+
+	cultivo.etapa[2].year = datatime.year;
+	cultivo.etapa[2].month = datatime.month;
+	cultivo.etapa[2].hours = datatime.hours+3;
+	cultivo.etapa[2].minutes = datatime.minutes;
+	cultivo.etapa[2].seconds = datatime.seconds;
+	cultivo.etapa[2].date = datatime.date;
+	// Se asegura que la fecha sea valida.
+	//	if((datatime.day + 21) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
+	//		cultivo.etapa[2].day = 21 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
+	//	}
+	//	else
+	//		cultivo.etapa[2].day = datatime.day + 21;
+
+	//
+	//  Se guardan los valores de las etapas en la SD
+	//
+	enviar_comando("C\r\n");
+	backup_etapas(); // Se guardan los valoers de las etapas en la SD.
+	enviar_comando("F\r\n");
+
+	//
+	//  Se cofigura la primer alarma.
+	//
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+	cultivo.etapa_actual = 0;
+	AlarmTime.hours = cultivo.etapa[0].hours;
+	AlarmTime.minutes = cultivo.etapa[0].minutes;
+	AlarmTime.seconds = cultivo.etapa[0].seconds;
+	AlarmTime.day = cultivo.etapa[0].date;
+	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
+	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
+
+	// Se setean las variables de control de a cuerdo a la etapa actual.
+	control.limite_delta_temp = tomate[cultivo.etapa_actual].limite_delta_temp;
+	control.max_temp_fan = tomate[cultivo.etapa_actual].max_temp_fan;
+	control.min_temp_fan = tomate[cultivo.etapa_actual].min_temp_fan;
+	control.max_temp_calentador = tomate[cultivo.etapa_actual].max_temp_calentador;
+	control.min_temp_calentador = tomate[cultivo.etapa_actual].min_temp_calentador;
+
+	strcpy(cultivo.nombre,"Tomate"); // Se guarda el nombre del cultivo.
+	cultivo.tipo = 0; // Se guarda el tipo de cultivo TOMATE = 0.
+
+	// Se habilitan las banderas de control.
+	cultivo.flag.control_activo = 1;
+	cultivo.flag.cambio_etapa = 1;
+	sistema.flag.first_dat_temp_int = 1;
+}
+
+void configurar_cultivo_zanahoria(void){
+	/*	Funcion configurar_cultivo_tomate()
+	 * 	Funcion que inicializa los valores de control de cultivo.
+	 *	Se configuran las fechas de las etapas y las variables objetivo para cada una de ellas.
+	 *	Ademas se comprueba que las fechas ingresadas sean correctas, si todas lo son se activa el seguimiento.
+	 */
+
+	//	uint8_t i,n_etapas_validas = 0;
+	//	char msj[30] = "";
+
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+
+	//
+	//Se fijan las alarmas y luego se las guarda en la tarjeta SD como backup.
+	//
+	cultivo.etapa[0].year = datatime.year;
+	cultivo.etapa[0].month = datatime.month;
 	cultivo.etapa[0].hours = datatime.hours;
 	cultivo.etapa[0].minutes = datatime.minutes+1;
 	cultivo.etapa[0].seconds = datatime.seconds;
@@ -977,45 +1098,19 @@ void configurar_cultivo_tomate(void){
 	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
 	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
 
-	// Variables del cultivo para cada etapa.
-	cultivo.variables[0].limite_delta_temp = 3;
-	cultivo.variables[0].max_temp_calentador = 20 ;
-	cultivo.variables[0].max_temp_fan = 23;
-	cultivo.variables[0].min_temp_calentador = 18;
-	cultivo.variables[0].min_temp_fan = 21;
+	// Se setean las variables de control de a cuerdo a la etapa actual.
+	control.limite_delta_temp = zanahoria[cultivo.etapa_actual].limite_delta_temp;
+	control.max_temp_fan = zanahoria[cultivo.etapa_actual].max_temp_fan;
+	control.min_temp_fan = zanahoria[cultivo.etapa_actual].min_temp_fan;
+	control.max_temp_calentador = zanahoria[cultivo.etapa_actual].max_temp_calentador;
+	control.min_temp_calentador = zanahoria[cultivo.etapa_actual].min_temp_calentador;
 
-	cultivo.variables[1].limite_delta_temp = 2;
-	cultivo.variables[1].max_temp_calentador = 19 ;
-	cultivo.variables[1].max_temp_fan = 22;
-	cultivo.variables[1].min_temp_calentador = 17;
-	cultivo.variables[1].min_temp_fan = 20;
+	strcpy(cultivo.nombre,"Zanahoria"); // Se guarda el nombre del cultivo.
+	cultivo.tipo = 1; // Se guarda el tipo de cultivo TOMATE = 0.
 
-	cultivo.variables[2].limite_delta_temp = 2;
-	cultivo.variables[2].max_temp_calentador = 19 ;
-	cultivo.variables[2].max_temp_fan = 22;
-	cultivo.variables[2].min_temp_calentador = 17;
-	cultivo.variables[2].min_temp_fan = 20;
-	//
-	strcpy(cultivo.nombre,"Tomate");
-	cultivo.tipo = 0;
-
+	// Se habilitan las banderas de control.
 	cultivo.flag.control_activo = 1;
 	cultivo.flag.cambio_etapa = 1;
-	//
-	//	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-	//
-	//	// Se comprueba que todas las etapas sean validas, es decir que no tengan una fecha anterior a la actual.
-	//	for(i=0;i<3;i++){
-	//		if(fecha_valida(cultivo.etapa[i]))
-	//			n_etapas_validas++;
-	//	}
-	//
-	//	if(n_etapas_validas == 3){
-	//		// Si el numero de etapas validas es el total se activa el control.
-	//		cultivo.flag.control_activo = 1;
-	//	}
-	//	else
-	//		cultivo.flag.control_activo = 0;
 }
 
 // Codigo para USART.
@@ -1168,6 +1263,42 @@ void log_etapas(void){
 	}
 }
 
+void datalogger(void){
+	FIL myFile;   // Filehandler
+	char temp_string[16];
+	char temp_msj[100];
+	sprintf(temp_string,"0:/TI-%d%d.csv",datatime.month,datatime.date);
+	sprintf(temp_msj,"%d:%d:%d;%s\n",datatime.hours,datatime.minutes,datatime.seconds,dht_interior.temperatura_string);
+	// Check ob Medium eingelegt ist
+	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+		// Media mounten
+		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+			// File zum schreiben im root neu anlegen
+			if(UB_Fatfs_OpenFile(&myFile,temp_string, F_WR_NEW)==FATFS_OK) {
+				// ein paar Textzeilen in das File schreiben
+				if(sistema.flag.first_dat_temp_int){
+					UB_Fatfs_WriteString(&myFile,"Hora;Temperatura\n");
+					UB_Fatfs_WriteString(&myFile,temp_msj);
+					sistema.flag.first_dat_temp_int = 0;
+				}
+				else{
+					UB_Fatfs_WriteString(&myFile,temp_msj);
+				}
+				enviar_comando("SIP\r\n");
+				// File schliessen
+				UB_Fatfs_CloseFile(&myFile);
+			}
+			else{
+				enviar_comando("NOP\r\n");
+			}
+			// Media unmounten
+			UB_Fatfs_UnMount(MMC_0);
+		}
+	}
+}
+
 void USART3_IRQHandler(void) {
 	/*	Handler USART3_IRQHandler
 	 * 	Se encarga de recibir los paquetes a traves del puerto serie.
@@ -1245,12 +1376,30 @@ void TM_RTC_AlarmBHandler(void) {
 		enviar_comando("Cambiando etapa...\r\n");
 		cultivo.etapa_actual++;
 		cultivo.flag.cambio_etapa = 1; // Se avisa el cambio de etapa para cambiar el archivo de log.
+		// Se setean las variables de control de a cuerdo a la etapa actual.
+		if(cultivo.tipo == 0){
+			control.limite_delta_temp = tomate[cultivo.etapa_actual].limite_delta_temp;
+			control.max_temp_fan = tomate[cultivo.etapa_actual].max_temp_fan;
+			control.min_temp_fan = tomate[cultivo.etapa_actual].min_temp_fan;
+			control.max_temp_calentador = tomate[cultivo.etapa_actual].max_temp_calentador;
+			control.min_temp_calentador = tomate[cultivo.etapa_actual].min_temp_calentador;
+		}
+		else if(cultivo.tipo == 1){
+			control.limite_delta_temp = zanahoria[cultivo.etapa_actual].limite_delta_temp;
+			control.max_temp_fan = zanahoria[cultivo.etapa_actual].max_temp_fan;
+			control.min_temp_fan = zanahoria[cultivo.etapa_actual].min_temp_fan;
+			control.max_temp_calentador = zanahoria[cultivo.etapa_actual].max_temp_calentador;
+			control.min_temp_calentador = zanahoria[cultivo.etapa_actual].min_temp_calentador;
+		}
+
 		AlarmTime.hours = cultivo.etapa[cultivo.etapa_actual].hours;
 		AlarmTime.minutes = cultivo.etapa[cultivo.etapa_actual].minutes;
 		AlarmTime.seconds = cultivo.etapa[cultivo.etapa_actual].seconds;
 		AlarmTime.day = cultivo.etapa[cultivo.etapa_actual].date;
 		AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
 		TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
+
+
 	}
 	else{
 		/* Set RTC alarm B, time in binary format */
@@ -1263,6 +1412,7 @@ void TM_RTC_AlarmBHandler(void) {
 	/* Disable Alarm so it will not trigger next month at the same date and time */
 	//TM_RTC_DisableAlarm(TM_RTC_Alarm_B);
 }
+
 
 
 
