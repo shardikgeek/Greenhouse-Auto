@@ -44,6 +44,7 @@
 #include "stm32_ub_fatfs.h" // Libreria de fatfs.
 #include "ventana.h"
 #include "fan.h"
+#include "fsm.h"
 
 // Variables globales.
 struct{
@@ -59,6 +60,7 @@ struct{
 	uint32_t contador;
 	uint8_t flag;
 	uint8_t estado;
+	uint32_t refresh_time;
 }display;
 
 struct{
@@ -177,6 +179,14 @@ struct{
 		unsigned int first_dat_temp_int : 1;
 		unsigned int menu : 1;
 	}flag;
+	struct {
+			unsigned int leer_sd : 1;
+			unsigned int abrir_archivo : 1;
+			unsigned int escribir_sd: 1;
+			unsigned int sd_desconectada : 1;
+			unsigned int dht_desconectado : 1;
+			unsigned int menu : 1;
+	}error;
 }sistema;
 
 TM_RTC_AlarmTime_t AlarmTime;

@@ -29,6 +29,7 @@ int main(void){
 	SystemInit(); // Activa el systick.
 	SysTick_Config(SystemCoreClock / 1e3); // Configuracion del tiempo de la interrupcion (cada 1us).
 	UB_Fatfs_Init(); // Init de la SD.
+	FSM_Init(); // Se inicializa la maquina de estados del menu.
 
 	serial.contador = 0;
 	serial.flag.comienzo_paquete = 0;
@@ -41,35 +42,13 @@ int main(void){
 	ldr.adc_cuentas_temp = 0; // Reset de la suma del promedio.
 	ldr.contador = 101; 		//Cada 5 ms
 
-	//	// Check ob Medium eingelegt ist
-	//	  if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
-	//			//GPIO_SetBits(GPIOD,GPIO_Pin_13);
-	//		// Media mounten
-	//	    if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
-	//	    	//GPIO_SetBits(GPIOD,GPIO_Pin_12);
-	//	      // File zum schreiben im root neu anlegen
-	//	      if(UB_Fatfs_OpenFile(&myFile, "0:/UB_File.txt", F_WR_NEW)==FATFS_OK) {
-	//	    	// ein paar Textzeilen in das File schreiben
-	//	        UB_Fatfs_WriteString(&myFile,"Test der WriteString-Funktion");
-	//	        UB_Fatfs_WriteString(&myFile,"hier Zeile wacho");
-	//	        UB_Fatfs_WriteString(&myFile,"ENDE");
-	//	        // File schliessen
-	//	        UB_Fatfs_CloseFile(&myFile);
-	//	        GPIO_SetBits(GPIOD,GPIO_Pin_14);
-	//	      }
-	//	      // Media unmounten
-	//	   	  UB_Fatfs_UnMount(MMC_0);
-	//	    }
-	//	  }else{
-	//			GPIO_SetBits(GPIOD,GPIO_Pin_15);
-	//	  }
-
 	tarjeta_sd.flag.fallo_abrir_archivo = 0;
 	cultivo.flag.control_activo = 0;
 	cargar_datos(); // Se cargan los datos por default.
 
 	control.flag.ventana_abierta = 0;
 	control.flag.fan_encendido = 0;
+	display.refresh_time = 2001;
 
 	while(1){
 		task_manager();
@@ -161,7 +140,7 @@ void task_scheduler(void){
 	}
 	else{
 		display.flag = 1;
-		display.contador = 2001;
+		display.contador = display.refresh_time;
 	}
 
 	// Rutina Serial.
@@ -461,8 +440,9 @@ void display_task(){
 	 */
 	char buffer[16];
 	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-	if(display.flag && !sistema.flag.menu){
 
+	if(display.flag && ActState == 0){
+		display.refresh_time = 2001;
 		if(!sistema.flag.conexion_serial){
 			//			char buffer[16];
 
@@ -510,8 +490,68 @@ void display_task(){
 		}
 
 	}
-	else if(sistema.flag.menu){
+	else if(ActState != 0 && display.flag){ // Si el estado es distinto de desactivado se muestra.
 		// Mostrar menu dependiendo el estado.
+		switch(ActState){
+		    case MENU_DESACTIVADO:{
+		    	UB_LCD_2x16_Clear();
+		    	UB_LCD_2x16_String(0,0,"Menu Desactivado");
+		    };break;
+		    case MENU_PRINCIPAL_1:{
+		    	UB_LCD_2x16_String(0,0,"->Menu princ 1");
+		    	UB_LCD_2x16_String(0,1,"Menu princ 2");
+		    };break;
+		    case MENU_PRINCIPAL_2:{
+		    	UB_LCD_2x16_String(0,0,"Menu princ 1");
+		    	UB_LCD_2x16_String(0,1,"->Menu princ 2");
+		    };break;
+		    case MENU_PRINCIPAL_3:{
+		    	UB_LCD_2x16_String(0,0,"Menu princ 2");
+		    	UB_LCD_2x16_String(0,1,"->Menu princ 3");
+		    };break;
+		    case MENU_1_1:{
+		    	UB_LCD_2x16_String(0,0,"->Menu 1_1");
+		    	UB_LCD_2x16_String(0,1,"Menu 1_2");
+		    };break;
+		    case MENU_1_2:{
+		    	UB_LCD_2x16_String(0,0,"Menu 1_1");
+		    	UB_LCD_2x16_String(0,1,"->Menu 1_2");
+		    };break;
+		    case MENU_1_3:{
+		    	UB_LCD_2x16_String(0,0,"Menu 1_2");
+		    	UB_LCD_2x16_String(0,1,"->Menu 1_3");
+		    };break;
+		    case MENU_2_1:{
+		    	UB_LCD_2x16_String(0,0,"->Menu 2_1");
+		    	UB_LCD_2x16_String(0,1,"Menu 2_2");
+		    };break;
+		    case MENU_2_2:{
+		    	UB_LCD_2x16_String(0,0,"Menu 2_1");
+		    	UB_LCD_2x16_String(0,1,"->Menu 2_2");
+		    };break;
+		    case MENU_2_3:{
+		    	UB_LCD_2x16_String(0,0,"Menu 2_2");
+		    	UB_LCD_2x16_String(0,1,"->Menu 2_3");
+		    };break;
+		    case MENU_3_1:{
+		    	UB_LCD_2x16_String(0,0,"->Menu 3_1");
+		    	UB_LCD_2x16_String(0,1,"Menu 3_2");
+		    };break;
+		    case MENU_3_2:{
+		    	UB_LCD_2x16_String(0,0,"Menu 3_1");
+		    	UB_LCD_2x16_String(0,1,"->Menu 3_2");
+		    };break;
+		    case MENU_3_3:{
+		    	UB_LCD_2x16_String(0,0,"Menu 3_2");
+		    	UB_LCD_2x16_String(0,1,"->Menu 3_3");
+		    };break;
+		    default:{
+		    	UB_LCD_2x16_Clear();
+		    	UB_LCD_2x16_String(0,0,"CHINGON");
+		    };break;
+		    }
+		display.flag = 0;
+		display.refresh_time = 51;
 	}
 }
 
@@ -566,7 +606,7 @@ void serial_task(void){
 			enviar_comando(":OKK,-,-!\r\n");
 		}
 		if(!strcmp(serial.comando,"ATR") && sistema.flag.conexion_serial){
-			datalogger();
+			datalogger_mejorado();
 			enviar_comando(":OKK,-,-!");
 		}
 		if(!strcmp(serial.comando,"SKR") && sistema.flag.conexion_serial){
@@ -589,6 +629,26 @@ void serial_task(void){
 		if(!strcmp(serial.comando,"INI") && !sistema.flag.conexion_serial){
 			sistema.flag.conexion_serial = 1;
 			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"MENU") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			FSM_menu();
+		}
+		if(!strcmp(serial.comando,"UP") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			FSM_arriba();
+		}
+		if(!strcmp(serial.comando,"DOWN") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			FSM_abajo();
+		}
+		if(!strcmp(serial.comando,"ENTER") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			FSM_enter();
+		}
+		if(!strcmp(serial.comando,"BACK") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			FSM_back();
 		}
 		if(!strcmp(serial.comando,"STP") && sistema.flag.conexion_serial){
 			sistema.flag.conexion_serial = 0;
@@ -1223,13 +1283,11 @@ void backup_etapas(void){
 				UB_Fatfs_WriteString(&myFile,temp_string[2]);
 				// File schliessen
 				UB_Fatfs_CloseFile(&myFile);
-				GPIO_SetBits(GPIOD,GPIO_Pin_14);
 			}
 			// Media unmounten
 			UB_Fatfs_UnMount(MMC_0);
 		}
 	}else{
-		GPIO_SetBits(GPIOD,GPIO_Pin_15);
 	}
 
 }
@@ -1253,7 +1311,6 @@ void log_etapas(void){
 				// File schliessen
 				UB_Fatfs_CloseFile(&myFile);
 				enviar_comando("CHLOG\r\n");
-				GPIO_SetBits(GPIOD,GPIO_Pin_15);
 			}
 			else{
 				enviar_comando("FALLO\r\n");
@@ -1262,7 +1319,7 @@ void log_etapas(void){
 			UB_Fatfs_UnMount(MMC_0);
 		}
 	}else{
-		GPIO_SetBits(GPIOD,GPIO_Pin_12);
+
 	}
 }
 
