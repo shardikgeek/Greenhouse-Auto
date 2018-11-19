@@ -1,0 +1,5 @@
+SAI_Inits.c:10:6:inicializar_leds	16	static
+SAI_Inits.c:34:6:inicializar_fan	16	static
+SAI_Inits.c:58:6:inicializar_ventana	16	static
+SAI_Inits.c:71:6:inicializar_calentador	16	static
+SAI_Inits.c:95:6:inicializar_bomba	16	static

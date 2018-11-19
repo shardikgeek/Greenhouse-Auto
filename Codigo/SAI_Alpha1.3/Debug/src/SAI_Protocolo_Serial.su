@@ -1,0 +1,3 @@
+SAI_Protocolo_Serial.c:9:6:enviar_comando	24	static
+SAI_Protocolo_Serial.c:21:6:USART3_IRQHandler	8	static
+SAI_Protocolo_Serial.c:92:6:USART3_Config	40	static
