@@ -196,9 +196,9 @@ void inicializar_leds(){
 }
 
 void inicializar_fan(){
-	/*	Funcion inicializar_leds()
-	 *	No recive ni devuelve un valor.
-	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
+	/*	Funcion inicializar_fan()
+	 *	No recibe ni devuelve un valor.
+	 *	Se inicializan el pin PD14 como salida para mover el fan.
 	 */
 
 	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
@@ -221,6 +221,11 @@ void inicializar_fan(){
 
 void inicializar_ventana()
 {
+	/*	Funcion inicializar_ventana()
+	 *	No recibe ni devuelve un valor.
+	 *	Se inicializan el pin PA0,PA1,PA2 y PA3 como salida para mover la ventana.
+	 */
+
 	GPIO_InitTypeDef GPIOA_Stepper;
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
 
@@ -233,16 +238,12 @@ void inicializar_ventana()
 }
 
 void inicializar_calentador(){
-	/*	Funcion inicializar_leds()
-	 *	No recive ni devuelve un valor.
-	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
+	/*	Funcion inicializar_calentador()
+	 *	No recibe ni devuelve un valor.
+	 *	Se inicializa el pin PC4 como salida para activar el rele del calentador.
 	 */
 
 	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
-
-	//
-	//Inicializacion de los leds.
-	//
 
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 
@@ -257,16 +258,12 @@ void inicializar_calentador(){
 }
 
 void inicializar_bomba(){
-	/*	Funcion inicializar_leds()
-	 *	No recive ni devuelve un valor.
-	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
+	/*	Funcion inicializar_fan()
+	 *	No recibe ni devuelve un valor.
+	 *	Se inicializa el pin PC5 como salida para activar el rele del calentador.
 	 */
 
 	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
-
-	//
-	//Inicializacion de los leds.
-	//
 
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 
@@ -436,7 +433,7 @@ void ventana_task(){
 void display_task(){
 	/*	Funcion display_task()
 	 *	No recive ni devuelve un valor.
-	 *	Tarea que lee un valor de ADC establecido en adc.h
+	 *	Tarea que se encarga de mostrar los mensajes en la pantalla LCD.
 	 */
 	char buffer[16];
 	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
@@ -558,12 +555,15 @@ void display_task(){
 void control_temp_task(){
 	/*	Control de temperatura
 	 * 	Esta funcion controla la temperatura interna del invernadero.
+	 *	Utiliza el modelo de control de temperatura por histeresis.
+	 *	Los valores se mantienen en un rango de temperaturas predeterminadas.
+	 * (Se puede agregar un limitador de tiempo por si la temperatura no baja o no sube)
 	 */
 
 	if(abs(dht_exterior.temperatura - dht_interior.temperatura) < control.limite_delta_temp){
 		// Si se tiene una diferencia de temperatura razonable entre el interior y el exterior se puede abrir la ventana.
 
-		if(dht_interior.temperatura >= control.max_temp_fan){
+		if(dht_interior.temperatura >= control.max_temp_fan){ // Si la temperatura interior es mayor que la objetivo se enfria el invernadero.
 			if(control.flag.ventana_abierta == 0 && control.flag.fan_encendido == 0 ){
 				abrir_ventana();
 				encender_ventilador();
@@ -572,7 +572,7 @@ void control_temp_task(){
 			}
 		}
 
-		else if(dht_exterior.temperatura <= control.min_temp_fan){
+		else if(dht_exterior.temperatura <= control.min_temp_fan){ // Se apaga el ventilador si la temperatura.
 			if(control.flag.ventana_abierta == 1 && control.flag.fan_encendido == 1 ){
 				cerrar_ventana();
 				apagar_ventilador();
