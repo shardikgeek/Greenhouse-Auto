@@ -94,14 +94,17 @@ void task_scheduler(void){
 	if(dht_interior.flag == 0 && dht_exterior.flag == 0){
 		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3))
 		{
-
-			if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3)){
-
-				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+			if(botones.contador_menu == 15){
+				if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3)){
+					GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+					botones.flag.fin_menu = 0; // boton presionado.
+				}
+				while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3));
 			}
-			while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3));
+			else if(botones.contador_menu < 15){
+				botones.contador_menu++;
+			}
 		}
-
 		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_6))
 		{
 
@@ -117,7 +120,7 @@ void task_scheduler(void){
 
 			if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_5)){
 
-				GPIO_ToggleBits(GPIOD,GPIO_Pin_5);
+				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
 			}
 			while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_6));
 		}
@@ -1494,12 +1497,20 @@ void serial_task(void){
 			apagar_ventilador();
 			enviar_comando(":OKK,-,-!\r\n");
 		}
-		if(!strcmp(serial.comando,"RELE") && !strcmp(serial.datos,"ON") && sistema.flag.conexion_serial){
+		if(!strcmp(serial.comando,"CAL") && !strcmp(serial.datos,"ON") && sistema.flag.conexion_serial){
 			GPIO_SetBits(GPIOC,GPIO_Pin_4);
 			enviar_comando(":OKK,-,-!\r\n");
 		}
-		if(!strcmp(serial.comando,"RELE") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
+		if(!strcmp(serial.comando,"CAL") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
 			GPIO_ResetBits(GPIOC,GPIO_Pin_4);
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"BOMBA") && !strcmp(serial.datos,"ON") && sistema.flag.conexion_serial){
+			GPIO_SetBits(GPIOC,GPIO_Pin_5);
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"BOMBA") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
+			GPIO_ResetBits(GPIOC,GPIO_Pin_5);
 			enviar_comando(":OKK,-,-!\r\n");
 		}
 		if(!strcmp(serial.comando,"VAR") && !strcmp(serial.datos,"TEMP") && sistema.flag.conexion_serial){

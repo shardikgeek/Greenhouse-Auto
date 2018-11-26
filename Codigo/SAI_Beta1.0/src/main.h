@@ -45,6 +45,7 @@
 
 struct{
 	uint8_t contador_menu;
+	uint8_t contador_menu2;
 	struct {
 		unsigned int fin_menu : 1;
 		unsigned int fin_back : 1;
