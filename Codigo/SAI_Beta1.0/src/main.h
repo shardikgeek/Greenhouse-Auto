@@ -64,12 +64,12 @@ struct{
 	}flag;
 }led;
 
-struct{
-	uint32_t contador;
-	uint8_t flag;
-	uint8_t estado;
-	uint32_t refresh_time;
-}display;
+//extern struct{
+//	uint32_t contador;
+//	uint8_t flag;
+//	uint8_t estado;
+//	uint32_t refresh_time;
+//}display;
 
 struct{
 	uint16_t contador;
@@ -99,6 +99,8 @@ struct{
 	uint8_t min_temp_fan;
 	uint8_t min_temp_calentador;
 	uint8_t max_temp_calentador;
+	uint8_t min_hum;
+	uint8_t max_hum;
 	struct {
 			unsigned int bomba_encendida : 1;
 			unsigned int calentador_encendido : 1;
@@ -114,6 +116,11 @@ typedef struct{
 	uint8_t min_temp_calentador; // Temperatura minima para prender el ventilador.
 	uint8_t max_temp_calentador; // Temeperatura maxima para apagar el ventilador.
 }temperaturas;
+
+typedef struct{
+	uint8_t min_hum; // Limite maximo entre la temperatura exterior e interior.
+	uint8_t max_hum; // Limite maximo para prender el ventilador.
+}humedad;
 
 struct{
 	// Esta estructura contiene los datos del cultivo
@@ -176,6 +183,14 @@ struct{
 }tarjeta_sd;
 
 struct{
+	uint32_t contador;
+	uint8_t flag;
+	uint8_t estado;
+	uint32_t refresh_time;
+}display;
+
+
+struct{
 	/*	struct sistema
 	 *  Estructura que contiene los estados mas generales del sistema.
 	 */
@@ -205,9 +220,16 @@ extern uint16_t vuelta;
 
 temperaturas tomate[3] = {
 	//{limite_delta_temp,max_temp_fan,min_temp_fan,min_temp_calentador,max_temp_calentador}
-	{5,20,18,14,17},
-	{5,21,19,15,18},
-	{5,22,20,16,19}
+	{5,31,30,28,29},
+	{5,30,28,20,18},
+	{5,31,30,28,29}
+};
+
+humedad tomate_h[3] = {
+	//{minima humedad,maxima humedad}
+		{60,70},
+		{30,70},
+		{60,70}
 };
 
 temperaturas zanahoria[3] = {
@@ -215,6 +237,13 @@ temperaturas zanahoria[3] = {
 	{1,2,3,4,5},
 	{6,7,8,9,10},
 	{11,12,13,14,15}
+};
+
+humedad zanahoria_h[3] = {
+		//{minima humedad,maxima humedad}
+		{60,70},
+		{30,70},
+		{60,70}
 };
 
 temperaturas custom[3] = {
@@ -257,7 +286,8 @@ void serial_modificar_temp(void);
 
 void configurar_horario_etapa(uint8_t n_etapa,uint8_t minutos);
 void inicializar_botones(void);
-void serial_modificar_fecha();
+void serial_modificar_fecha(void);
+void control_hum_task(void);
 
 
 #endif /* MAIN_H_ */

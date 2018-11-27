@@ -9,6 +9,10 @@
 #ifndef VENTANA_H_
 #define VENTANA_H_
 #define N_VUELTAS 6700
+#define IN1 GPIO_Pin_10
+#define IN2 GPIO_Pin_13
+#define IN3 GPIO_Pin_14
+#define IN4 GPIO_Pin_15
 
 #include "stm32f4xx_it.h"
 #include <stm32f4xx_tim.h>
@@ -70,7 +74,7 @@ void TIM3_Config(void){
 
 	/* Se habilitan las interrupciones globales para el timer X*/
 	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 5;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
@@ -98,28 +102,28 @@ void TIM3_IRQHandler (void)  {
 		if(sentido == 1) //Abrir Ventana (Antihorario)
 		{
 			if(step == 0){
-				GPIO_Write(GPIOA,GPIO_Pin_0);
+				GPIO_Write(GPIOA,IN1);
 			}
 			else if(step == 1){
-				GPIO_Write(GPIOA,GPIO_Pin_0| GPIO_Pin_1);
+				GPIO_Write(GPIOA,IN1| IN2);
 			}
 			else if(step == 2){
-				GPIO_Write(GPIOA,GPIO_Pin_1);
+				GPIO_Write(GPIOA,IN2);
 			}
 			else if(step == 3){
-				GPIO_Write(GPIOA,GPIO_Pin_2|GPIO_Pin_1);
+				GPIO_Write(GPIOA,IN3|IN2);
 			}
 			else if(step == 4){
-				GPIO_Write(GPIOA,GPIO_Pin_2);
+				GPIO_Write(GPIOA,IN3);
 			}
 			else if(step == 5){
-				GPIO_Write(GPIOA,GPIO_Pin_2|GPIO_Pin_3);
+				GPIO_Write(GPIOA,IN3|IN4);
 			}
 			else if(step == 6){
-				GPIO_Write(GPIOA,GPIO_Pin_3);
+				GPIO_Write(GPIOA,IN4);
 			}
 			else if(step == 7){
-				GPIO_Write(GPIOA,GPIO_Pin_3|GPIO_Pin_0);
+				GPIO_Write(GPIOA,IN4|IN1);
 			}
 			else if(step > 7){
 				step = 0;
@@ -130,28 +134,28 @@ void TIM3_IRQHandler (void)  {
 		else if(sentido == 0) //Cerrar Ventana (Antihorario)
 		{
 			if(step == 7){
-				GPIO_Write(GPIOA,GPIO_Pin_0);
+				GPIO_Write(GPIOA,IN1);
 			}
 			else if(step == 6){
-				GPIO_Write(GPIOA,GPIO_Pin_0| GPIO_Pin_1);
+				GPIO_Write(GPIOA,IN1| IN2);
 			}
 			else if(step == 5){
-				GPIO_Write(GPIOA,GPIO_Pin_1);
+				GPIO_Write(GPIOA,IN2);
 			}
 			else if(step == 4){
-				GPIO_Write(GPIOA,GPIO_Pin_2|GPIO_Pin_1);
+				GPIO_Write(GPIOA,IN3|IN2);
 			}
 			else if(step == 3){
-				GPIO_Write(GPIOA,GPIO_Pin_2);
+				GPIO_Write(GPIOA,IN3);
 			}
 			else if(step == 2){
-				GPIO_Write(GPIOA,GPIO_Pin_2|GPIO_Pin_3);
+				GPIO_Write(GPIOA,IN3|IN4);
 			}
 			else if(step == 1){
-				GPIO_Write(GPIOA,GPIO_Pin_3);
+				GPIO_Write(GPIOA,IN4);
 			}
 			else if(step == 0){
-				GPIO_Write(GPIOA,GPIO_Pin_3|GPIO_Pin_0);
+				GPIO_Write(GPIOA,IN4|IN1);
 			}
 			else if(step > 7){
 				step = 0;
@@ -161,7 +165,7 @@ void TIM3_IRQHandler (void)  {
 
 		else if(sentido == 2) //Para ventana
 		{
-			GPIO_ResetBits(GPIOA,GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_3);
+			GPIO_ResetBits(GPIOA,IN1|IN2|IN3|IN4);
 			vuelta = 0;
 			step = 0;
 		}

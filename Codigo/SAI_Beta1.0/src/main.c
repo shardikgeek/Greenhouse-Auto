@@ -70,7 +70,7 @@ void inicializar_botones(){
 
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
 
-	GPIO_Init_Pins.GPIO_Pin = GPIO_Pin_5 + GPIO_Pin_3 + GPIO_Pin_6 + GPIO_Pin_7;
+	GPIO_Init_Pins.GPIO_Pin = GPIO_Pin_1 + GPIO_Pin_5 + GPIO_Pin_3 + GPIO_Pin_6 + GPIO_Pin_7;
 	GPIO_Init_Pins.GPIO_Mode = GPIO_Mode_IN; //Entrada
 	GPIO_Init_Pins.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP;
@@ -91,12 +91,14 @@ void task_scheduler(void){
 	 */
 
 	// BOTONES
-	if(dht_interior.flag == 0 && dht_exterior.flag == 0){
+	if(dht_interior.flag == 0 && dht_exterior.flag == 0 && display.flag == 0 && serial.flag.mostrar_valores == 0){
 		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3))
 		{
 			if(botones.contador_menu == 15){
 				if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3)){
 					GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+					FSM_menu();
+					display.flag = 1;
 					botones.flag.fin_menu = 0; // boton presionado.
 				}
 				while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3));
@@ -111,6 +113,8 @@ void task_scheduler(void){
 			if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_6)){
 
 				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+				FSM_abajo();
+				display.flag = 1;
 			}
 			while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_6));
 		}
@@ -121,8 +125,10 @@ void task_scheduler(void){
 			if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_5)){
 
 				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+				FSM_back();
+				display.flag = 1;
 			}
-			while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_6));
+			while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_5));
 		}
 
 		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7))
@@ -131,8 +137,22 @@ void task_scheduler(void){
 			if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7)){
 
 				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+				FSM_arriba();
+				display.flag = 1;
 			}
-			//		while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7));
+			while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7));
+		}
+
+		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_1))
+		{
+
+			if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_1)){
+
+				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+				FSM_enter();
+				display.flag = 1;
+			}
+			while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_1));
 		}
 	}
 
@@ -152,7 +172,7 @@ void task_scheduler(void){
 	}
 	else{
 		dht_interior.flag = 1;
-		dht_interior.contador = 2001;
+		dht_interior.contador = 2501;
 		dht_interior.flag_timeout = 0;
 		dht_interior.timeout = 1001; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
 	}
@@ -172,7 +192,7 @@ void task_scheduler(void){
 	}
 	else{
 		dht_exterior.flag = 1;
-		dht_exterior.contador = 2001;
+		dht_exterior.contador = 2501;
 		dht_exterior.flag_timeout = 0;
 		dht_exterior.timeout = 1001; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
 	}
@@ -296,7 +316,7 @@ void inicializar_ventana()
 
 	GPIOA_Stepper.GPIO_Mode = GPIO_Mode_OUT;
 	GPIOA_Stepper.GPIO_OType = GPIO_OType_PP;
-	GPIOA_Stepper.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_3;
+	GPIOA_Stepper.GPIO_Pin = GPIO_Pin_10|GPIO_Pin_13|GPIO_Pin_14|GPIO_Pin_15;
 	GPIOA_Stepper.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIOA_Stepper.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOA,&GPIOA_Stepper);
@@ -357,6 +377,15 @@ void task_manager(void){
 	 *	Estas tareas se realizan o no dependiendo de su flag de evento.
 	 */
 
+//	if(menu_flags.f_pausa){
+//		GPIO_SetBits(GPIOD,GPIO_Pin_13);
+		UB_LCD_2x16_String(0,0,"HOLA             ");
+		UB_LCD_2x16_String(0,1,"                 ");
+		display.refresh_time = 1001;
+//	}else{
+//		GPIO_ResetBits(GPIOD,GPIO_Pin_13);
+//	}
+
 	// Lectura de datos
 	dht_interior_task();
 	dht_exterior_task();
@@ -382,9 +411,10 @@ void task_manager(void){
 			datalogger_mejorado();
 			cultivo.flag.fin_contador = 0;
 		}
-		if(cultivo.flag.pause)
+		if(!cultivo.flag.pause){
 			control_temp_task();
-		//control_hum_task();
+			control_hum_task();
+		}
 	}
 
 
@@ -476,19 +506,19 @@ void yl69_task(){
 		yl.adc_cuentas = adc_leer_cuentas_yl69();
 		yl.flag = 0;
 
-		if(yl.adc_cuentas < 1300)
+		if(yl.adc_cuentas < 640)
 		{
 			yl.humedad = 100;
 		}
 
-		else if(yl.adc_cuentas > 3000)
+		else if(yl.adc_cuentas > 2005)
 		{
 			yl.humedad = 0;
 		}
 
 		else
 		{
-			yl.humedad = yl.adc_cuentas * (-0.0588) + 176;
+			yl.humedad = yl.adc_cuentas * (-0.073) + 146.365;
 		}
 	}
 }
@@ -568,53 +598,77 @@ void display_task(){
 		    	UB_LCD_2x16_Clear();
 		    	UB_LCD_2x16_String(0,0,"Menu Desactivado");
 		    };break;
-		    case MENU_PRINCIPAL_1:{
-		    	UB_LCD_2x16_String(0,0,"->Menu princ 1");
-		    	UB_LCD_2x16_String(0,1,"Menu princ 2");
+		    case CULTIVO:{
+		    	UB_LCD_2x16_String(0,0,"->Cultivo       ");
+		    	UB_LCD_2x16_String(0,1,"Variables       ");
 		    };break;
-		    case MENU_PRINCIPAL_2:{
-		    	UB_LCD_2x16_String(0,0,"Menu princ 1");
-		    	UB_LCD_2x16_String(0,1,"->Menu princ 2");
+		    case VARIABLES:{
+		    	UB_LCD_2x16_String(0,0,"Cultivo         ");
+		    	UB_LCD_2x16_String(0,1,"->Variables     ");
 		    };break;
-		    case MENU_PRINCIPAL_3:{
-		    	UB_LCD_2x16_String(0,0,"Menu princ 2");
-		    	UB_LCD_2x16_String(0,1,"->Menu princ 3");
+		    case CONTROL:{
+		    	UB_LCD_2x16_String(0,0,"->Control       ");
+		    	UB_LCD_2x16_String(0,1,"Exportar        ");
 		    };break;
-		    case MENU_1_1:{
-		    	UB_LCD_2x16_String(0,0,"->Menu 1_1");
-		    	UB_LCD_2x16_String(0,1,"Menu 1_2");
+		    case EXPORTAR:{
+		    	UB_LCD_2x16_String(0,0,"Control         ");
+		    	UB_LCD_2x16_String(0,1,"->Exportar      ");
 		    };break;
-		    case MENU_1_2:{
-		    	UB_LCD_2x16_String(0,0,"Menu 1_1");
-		    	UB_LCD_2x16_String(0,1,"->Menu 1_2");
+		    case NUEVO_CULTIVO:{
+		    	UB_LCD_2x16_String(0,0,"->Nuevo Cultivo ");
+		    	UB_LCD_2x16_String(0,1,"Pausar          ");
 		    };break;
-		    case MENU_1_3:{
-		    	UB_LCD_2x16_String(0,0,"Menu 1_2");
-		    	UB_LCD_2x16_String(0,1,"->Menu 1_3");
+		    case PAUSAR:{
+		    	UB_LCD_2x16_String(0,0,"Nuevo Cultivo   ");
+		    	UB_LCD_2x16_String(0,1,"->Pausar        ");
 		    };break;
-		    case MENU_2_1:{
-		    	UB_LCD_2x16_String(0,0,"->Menu 2_1");
-		    	UB_LCD_2x16_String(0,1,"Menu 2_2");
+		    case CANCELAR:{
+		    	UB_LCD_2x16_String(0,0,"->Cancelar      ");
+		    	UB_LCD_2x16_String(0,1,"                ");
 		    };break;
-		    case MENU_2_2:{
-		    	UB_LCD_2x16_String(0,0,"Menu 2_1");
-		    	UB_LCD_2x16_String(0,1,"->Menu 2_2");
+		    case TOMATE:{
+		    	UB_LCD_2x16_String(0,0,"->Tomate        ");
+		    	UB_LCD_2x16_String(0,1,"Zanahoria");
 		    };break;
-		    case MENU_2_3:{
-		    	UB_LCD_2x16_String(0,0,"Menu 2_2");
-		    	UB_LCD_2x16_String(0,1,"->Menu 2_3");
+		    case ZANAHORIA:{
+		    	UB_LCD_2x16_String(0,0,"Tomate          ");
+		    	UB_LCD_2x16_String(0,1,"->Zanahoria     ");
 		    };break;
-		    case MENU_3_1:{
-		    	UB_LCD_2x16_String(0,0,"->Menu 3_1");
-		    	UB_LCD_2x16_String(0,1,"Menu 3_2");
+		    case HUMEDAD:{
+		    	UB_LCD_2x16_String(0,0,"->Humedad       ");
+		    	UB_LCD_2x16_String(0,1,"Temp Ext        ");
 		    };break;
-		    case MENU_3_2:{
-		    	UB_LCD_2x16_String(0,0,"Menu 3_1");
-		    	UB_LCD_2x16_String(0,1,"->Menu 3_2");
+		    case TEMP_EXT:{
+		    	UB_LCD_2x16_String(0,0,"Humedad         ");
+		    	UB_LCD_2x16_String(0,1,"->Temp Ext      ");
 		    };break;
-		    case MENU_3_3:{
-		    	UB_LCD_2x16_String(0,0,"Menu 3_2");
-		    	UB_LCD_2x16_String(0,1,"->Menu 3_3");
+		    case TEMP_INT:{
+		    	UB_LCD_2x16_String(0,0,"->Temp Int      ");
+		    	UB_LCD_2x16_String(0,1,"                ");
+		    };break;
+		    case BOMBA:{
+		    	UB_LCD_2x16_String(0,0,"->Bomba         ");
+		    	UB_LCD_2x16_String(0,1,"Calentador      ");
+		    };break;
+		    case CALENTADOR:{
+		    	UB_LCD_2x16_String(0,0,"Bomba           ");
+		    	UB_LCD_2x16_String(0,1,"->Calentador    ");
+		    };break;
+		    case VENTANA:{
+		    	UB_LCD_2x16_String(0,0,"->Ventana       ");
+		    	UB_LCD_2x16_String(0,1,"Ventilador      ");
+		    };break;
+		    case VENTILADOR:{
+		    	UB_LCD_2x16_String(0,0,"Ventana         ");
+		    	UB_LCD_2x16_String(0,1,"->Ventilador    ");
+		    };break;
+		    case LOG:{
+		    	UB_LCD_2x16_String(0,0,"->Log           ");
+		    	UB_LCD_2x16_String(0,1,"Etapas          ");
+		    };break;
+		    case ETAPAS:{
+		    	UB_LCD_2x16_String(0,0,"Log             ");
+		    	UB_LCD_2x16_String(0,1,"->Etapas        ");
 		    };break;
 		    default:{
 		    	UB_LCD_2x16_Clear();
@@ -652,13 +706,25 @@ void control_temp_task(){
 			}
 		}
 
-//		if(dht_interior.temperatura <= control.max_temp_calentador){
-//			GPIO_SetBits(GPIOD,GPIO_Pin_12); // Se enciende el calentador.
-//		}
-//		else if(dht_exterior.temperatura >= control.min_temp_calentador){
-//			GPIO_ResetBits(GPIOD,GPIO_Pin_12);
-//		}
+		if(dht_interior.temperatura <= control.max_temp_calentador){
+			GPIO_SetBits(GPIOC,GPIO_Pin_4); // Se enciende el calentador.
+			control.flag.calentador_encendido = 1;
+		}
+		else if(dht_exterior.temperatura >= control.min_temp_calentador){
+			GPIO_ResetBits(GPIOC,GPIO_Pin_4);
+			control.flag.calentador_encendido = 0;
+		}
 
+	}
+}
+void control_hum_task(void){
+	if(yl.humedad <= control.min_hum){
+		GPIO_SetBits(GPIOC,GPIO_Pin_5); // Se enciende la bomba.
+		control.flag.bomba_encendida = 1;
+	}
+	else if(yl.humedad >= control.max_hum){
+		GPIO_ResetBits(GPIOC,GPIO_Pin_5); // Se apaga la bomba
+		control.flag.bomba_encendida = 0;
 	}
 }
 
@@ -1025,7 +1091,7 @@ void configurar_cultivo_tomate(void){
 	cultivo.etapa[0].year = datatime.year;
 	cultivo.etapa[0].month = datatime.month;
 	cultivo.etapa[0].hours = datatime.hours;
-	cultivo.etapa[0].minutes = datatime.minutes+2;
+	cultivo.etapa[0].minutes = datatime.minutes+1;
 	cultivo.etapa[0].seconds = datatime.seconds;
 	cultivo.etapa[0].date = datatime.date;
 	// Se asegura que la fecha sea valida.
@@ -1038,7 +1104,7 @@ void configurar_cultivo_tomate(void){
 	cultivo.etapa[1].year = datatime.year;
 	cultivo.etapa[1].month = datatime.month;
 	cultivo.etapa[1].hours = datatime.hours;
-	cultivo.etapa[1].minutes = datatime.minutes+4;
+	cultivo.etapa[1].minutes = datatime.minutes+2;
 	cultivo.etapa[1].seconds = datatime.seconds;
 	// Se asegura que la fecha sea valida.
 	//	if((datatime.day + 14) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
@@ -1051,7 +1117,7 @@ void configurar_cultivo_tomate(void){
 	cultivo.etapa[2].year = datatime.year;
 	cultivo.etapa[2].month = datatime.month;
 	cultivo.etapa[2].hours = datatime.hours;
-	cultivo.etapa[2].minutes = datatime.minutes+6;
+	cultivo.etapa[2].minutes = datatime.minutes+3;
 	cultivo.etapa[2].seconds = datatime.seconds;
 	cultivo.etapa[2].date = datatime.date;
 	// Se asegura que la fecha sea valida.
@@ -1086,6 +1152,8 @@ void configurar_cultivo_tomate(void){
 	control.min_temp_fan = tomate[cultivo.etapa_actual].min_temp_fan;
 	control.max_temp_calentador = tomate[cultivo.etapa_actual].max_temp_calentador;
 	control.min_temp_calentador = tomate[cultivo.etapa_actual].min_temp_calentador;
+	control.max_hum = tomate_h[cultivo.etapa_actual].max_hum;
+	control.min_hum = tomate_h[cultivo.etapa_actual].min_hum;
 
 	strcpy(cultivo.nombre,"Tomate"); // Se guarda el nombre del cultivo.
 	cultivo.tipo = 0; // Se guarda el tipo de cultivo TOMATE = 0.
@@ -1140,6 +1208,8 @@ void configurar_cultivo_zanahoria(void){
 	control.min_temp_fan = zanahoria[cultivo.etapa_actual].min_temp_fan;
 	control.max_temp_calentador = zanahoria[cultivo.etapa_actual].max_temp_calentador;
 	control.min_temp_calentador = zanahoria[cultivo.etapa_actual].min_temp_calentador;
+	control.max_hum = zanahoria_h[cultivo.etapa_actual].max_hum;
+	control.min_hum = zanahoria_h[cultivo.etapa_actual].min_hum;
 
 	strcpy(cultivo.nombre,"Zanahoria"); // Se guarda el nombre del cultivo.
 	cultivo.tipo = 1; // Se guarda el tipo de cultivo TOMATE = 0.
@@ -1171,7 +1241,7 @@ void configurar_horario_etapa(uint8_t n_etapa,uint8_t valor){
 		aux.date = valor;
 	}
 
-	if((datatime.date + aux.date) > 31){ // Si se pasa de dias aumenta el mes.
+	if((datatime.date + aux.date) > 29){ // Si se pasa de dias aumenta el mes.
 		aux.month++;
 	}
 	if((datatime.month + aux.month) > 12){ // Si se pasa de meses aumenta el año.
@@ -1663,6 +1733,8 @@ void TM_RTC_AlarmBHandler(void) {
 			control.min_temp_fan = tomate[cultivo.etapa_actual].min_temp_fan;
 			control.max_temp_calentador = tomate[cultivo.etapa_actual].max_temp_calentador;
 			control.min_temp_calentador = tomate[cultivo.etapa_actual].min_temp_calentador;
+			control.max_hum = tomate_h[cultivo.etapa_actual].max_hum;
+			control.min_hum = tomate_h[cultivo.etapa_actual].min_hum;
 		}
 		else if(cultivo.tipo == 1){
 			control.limite_delta_temp = zanahoria[cultivo.etapa_actual].limite_delta_temp;
@@ -1670,6 +1742,8 @@ void TM_RTC_AlarmBHandler(void) {
 			control.min_temp_fan = zanahoria[cultivo.etapa_actual].min_temp_fan;
 			control.max_temp_calentador = zanahoria[cultivo.etapa_actual].max_temp_calentador;
 			control.min_temp_calentador = zanahoria[cultivo.etapa_actual].min_temp_calentador;
+			control.max_hum = zanahoria_h[cultivo.etapa_actual].max_hum;
+			control.min_hum = zanahoria_h[cultivo.etapa_actual].min_hum;
 		}
 
 		AlarmTime.hours = cultivo.etapa[cultivo.etapa_actual].hours;
@@ -1688,6 +1762,18 @@ void TM_RTC_AlarmBHandler(void) {
 		cultivo.flag.cambio_etapa = 1; // Se avisa el cambio de etapa para cambiar el archivo de log.
 		enviar_comando("ALARMA B DESCTIVADA\r\n");
 		TM_RTC_DisableAlarm(TM_RTC_Alarm_B);
+		if(control.flag.fan_encendido){
+			apagar_ventilador();
+		}
+		if(control.flag.ventana_abierta){
+			cerrar_ventana();
+		}
+		if(control.flag.calentador_encendido){
+			GPIO_ResetBits(GPIOC,GPIO_Pin_4);
+		}
+		if(control.flag.bomba_encendida){
+			GPIO_ResetBits(GPIOC,GPIO_Pin_5);
+		}
 	}
 	/* Disable Alarm so it will not trigger next month at the same date and time */
 	//TM_RTC_DisableAlarm(TM_RTC_Alarm_B);
