@@ -1,0 +1,13 @@
+fsm_transition.c:22:6:FSM_f_pausar	8	static
+fsm_transition.c:41:6:FSM_f_cancelar	4	static
+fsm_transition.c:50:6:FSM_f_tomate	4	static
+fsm_transition.c:59:6:FSM_f_zanahoria	4	static
+fsm_transition.c:68:6:FSM_f_humedad	4	static
+fsm_transition.c:77:6:FSM_f_temp_ext	4	static
+fsm_transition.c:86:6:FSM_f_temp_int	4	static
+fsm_transition.c:95:6:FSM_f_bomba	4	static
+fsm_transition.c:104:6:FSM_f_calentador	4	static
+fsm_transition.c:113:6:FSM_f_ventana	4	static
+fsm_transition.c:122:6:FSM_f_ventilador	4	static
+fsm_transition.c:131:6:FSM_f_log	4	static
+fsm_transition.c:140:6:FSM_f_etapas	4	static

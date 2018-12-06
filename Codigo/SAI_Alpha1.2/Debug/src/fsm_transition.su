@@ -1,9 +1,0 @@
-fsm_transition.c:19:6:FSM_do_menu_1_1	8	static
-fsm_transition.c:29:6:FSM_do_menu_1_2	8	static
-fsm_transition.c:39:6:FSM_do_menu_1_3	8	static
-fsm_transition.c:49:6:FSM_do_menu_2_1	8	static
-fsm_transition.c:59:6:FSM_do_menu_2_2	8	static
-fsm_transition.c:69:6:FSM_do_menu_2_3	8	static
-fsm_transition.c:79:6:FSM_do_menu_3_1	8	static
-fsm_transition.c:89:6:FSM_do_menu_3_2	8	static
-fsm_transition.c:99:6:FSM_do_menu_3_3	8	static
