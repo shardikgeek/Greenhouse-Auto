@@ -18,6 +18,7 @@ int main(void){
 	inicializar_ventana();
 	inicializar_calentador();
 	inicializar_bomba();
+	inicializar_nivel_agua();
 	adc_inicializar();
 	TIM5_Start(); // Inicializa el timer del DHT.
 	TIM3_Start(); // Inicializa el timer para el motor paso a paso.
@@ -49,6 +50,8 @@ int main(void){
 
 	control.flag.ventana_abierta = 0;
 	control.flag.fan_encendido = 0;
+	control.flag.bomba_encendida = 0;
+	control.flag.calentador_encendido = 0;
 	display.refresh_time = 2001;
 	// Offsets de tareas.
 	dht_interior.contador = 2501;
@@ -60,6 +63,9 @@ int main(void){
 		task_manager();
 	}
 }
+
+
+/// INICIALIZAIONES
 
 void inicializar_botones(){
 	//
@@ -79,187 +85,26 @@ void inicializar_botones(){
 	GPIO_Init(GPIOD, &GPIO_Init_Pins);// Carga de la estrucura de datos.
 }
 
-void task_scheduler(void){
-	/*	Funcion task_scheduler()
-	 *	Maneja los contadores de las distintas tareas. Esta funcion es llamada por el systick cada
-	 *	vez que se vence su contador (1ms en este caso).
-	 *	Cuando el ontador de una tarea llega a su, fin se dispara una bandera de evento.
-	 *	Este evento es chequeado luego de la interrupcion generada por el systick en el main().
-	 *	Puede haber dos tipos de tareas, ciclicas o no ciclicas. En las ciclicas el
-	 *	contador se resetea cada vez q una tarea finaliza, en las no ciclicas el contador
-	 *	se setea solo cuando es necesario.
-	 */
-
-	// BOTONES
-	if(dht_interior.flag == 0 && dht_exterior.flag == 0 && display.flag == 0 && serial.flag.mostrar_valores == 0){
-		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3))
-		{
-			if(botones.contador_menu == 15){
-				if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3)){
-					GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
-					FSM_menu();
-					display.flag = 1;
-					botones.flag.fin_menu = 0; // boton presionado.
-				}
-				while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3));
-			}
-			else if(botones.contador_menu < 15){
-				botones.contador_menu++;
-			}
-		}
-		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_6))
-		{
-
-			if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_6)){
-
-				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
-				FSM_abajo();
-				display.flag = 1;
-			}
-			while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_6));
-		}
-
-		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_5))
-		{
-
-			if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_5)){
-
-				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
-				FSM_back();
-				display.flag = 1;
-			}
-			while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_5));
-		}
-
-		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7))
-		{
-
-			if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7)){
-
-				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
-				FSM_arriba();
-				display.flag = 1;
-			}
-			while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7));
-		}
-
-		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_1))
-		{
-
-			if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_1)){
-
-				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
-				FSM_enter();
-				display.flag = 1;
-			}
-			while(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_1));
-		}
-	}
-
-	//	// Rutina DHT
-	if(dht_interior.flag){
-		if(dht_interior.timeout >= 1){
-			dht_interior.timeout--;
-		}
-
-		if(dht_interior.timeout <= 0){
-			dht_interior.flag_timeout = 1;
-		}
-	}
-
-	if(dht_interior.contador >= 1){
-		dht_interior.contador--;
-	}
-	else{
-		dht_interior.flag = 1;
-		dht_interior.contador = 2501;
-		dht_interior.flag_timeout = 0;
-		dht_interior.timeout = 1001; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
-	}
-
-	if(dht_exterior.flag){
-		if(dht_exterior.timeout >= 1){
-			dht_exterior.timeout--;
-		}
-
-		if(dht_exterior.timeout <= 0){
-			dht_exterior.flag_timeout = 1;
-		}
-	}
-
-	if(dht_exterior.contador >= 1){
-		dht_exterior.contador--;
-	}
-	else{
-		dht_exterior.flag = 1;
-		dht_exterior.contador = 2501;
-		dht_exterior.flag_timeout = 0;
-		dht_exterior.timeout = 1001; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
-	}
+void inicializar_nivel_agua(){
 	//
-	// Rutina LDR
-	if(ldr.contador >= 1){
-		ldr.contador--;
-	}
-	else{
-		ldr.flag.fin_contador = 1;
-		ldr.contador = 101; 		//Cada 100 mseg
-	}
+	//Inicializacion de los botones.
+	//
 
-	// Ruitna YL-69
-	if(yl.contador >= 1){
-		yl.contador--;
-	}
-	else{
-		yl.flag = 1;
-		yl.contador = 101;
-	}
+	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
 
-	// Rutina del LED.
-	if(led.contador >= 1){
-		led.contador--;
-	}
-	else{
-		led.flag.fin_contador = (led.flag.fin_contador) ? 0 : 1;
-		led.contador = contador_led;
-	}
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 
-	// Rutina display.
-	if(display.contador >= 1){
-		display.contador--;
-	}
-	else{
-		display.flag = 1;
-		display.contador = display.refresh_time;
-	}
+	GPIO_Init_Pins.GPIO_Pin = GPIO_Pin_6;
+	GPIO_Init_Pins.GPIO_Mode = GPIO_Mode_IN; //Entrada
+	GPIO_Init_Pins.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP;
+	GPIO_Init_Pins.GPIO_PuPd = GPIO_PuPd_UP;
 
-	// Rutina Serial.
-	if(serial.timeout >= 1){
-		serial.timeout--;
-	}
-	else if(serial.flag.comienzo_paquete){
-		serial.flag.comienzo_paquete = 0;
-		enviar_comando(":TMO,-,-!");
-	}
-
-	// Contador para el modo monitor
-	if(serial.contador_task >= 1){
-		serial.contador_task--;
-	}
-	else if(sistema.flag.modo_monitor_serial){
-		serial.contador_task = 1001;
-		serial.flag.mostrar_valores = 1;
-	}
-
-	// Contador para chequear cultivo.
-	if(cultivo.contador_aux >= 1 && cultivo.flag.control_activo){
-		cultivo.contador_aux--;
-	}
-	else if(cultivo.flag.control_activo){
-		cultivo.flag.fin_contador = 1;
-		cultivo.contador_aux = 10e3 + 1;
-	}
+	GPIO_Init(GPIOC, &GPIO_Init_Pins);// Carga de la estrucura de datos.
 }
+
+
+
 
 void inicializar_leds(){
 	/*	Funcion inicializar_leds()
@@ -370,6 +215,282 @@ void inicializar_bomba(){
 
 }
 
+
+static void USART3_Config(void)
+{
+	/*	Funcion USART3_Config
+	 * 	Configura los pines necesarios para la conexion a traves de RS232.
+	 * 	Ademas inicializa las interrupciones para el USART3 en modo recepcion.
+	 */
+	GPIO_InitTypeDef GPIO_InitStructure;
+	USART_InitTypeDef USART_InitStructure;
+	/* USART IOs configuration ***********************************/
+	/* Enable GPIOC clock */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+	/* Connect PC10 to USART3_Tx */
+	GPIO_PinAFConfig(GPIOD, GPIO_PinSource8, GPIO_AF_USART3);
+	/* Connect PC11 to USART3_Rx*/
+	GPIO_PinAFConfig(GPIOD, GPIO_PinSource9, GPIO_AF_USART3);
+	/* Configure USART3_Tx and USART3_Rx as alternate function */
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz; // estaba en 50MHz
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
+	/* USART configuration ***************************************/
+	/* USART3 configured as follow:
+- BaudRate = 115200 baud
+- Word Length = 8 Bits
+- One Stop Bit
+- No parity
+- Hardware flow control disabled (RTS and CTS signals)
+- Receive and transmit enabled
+	 */
+	/* Enable USART3 clock */
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+	USART_InitStructure.USART_BaudRate = 9600;
+	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;
+	USART_InitStructure.USART_Parity = USART_Parity_No;
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+	USART_Init(USART3, &USART_InitStructure);
+	/* Enable USART3 */
+	USART_Cmd(USART3, ENABLE);
+
+	//USART1 is more important than USART2, so it has lower sub priority number
+	NVIC_InitTypeDef NVIC_InitStruct;
+
+	NVIC_InitStruct.NVIC_IRQChannel = USART3_IRQn;
+	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 10;
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+	NVIC_Init(&NVIC_InitStruct);
+
+	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE); // Se habilitan las interrupciones cuando se recibe un dato.
+}
+///
+
+///	Tareas
+
+void task_scheduler(void){
+	/*	Funcion task_scheduler()
+	 *	Maneja los contadores de las distintas tareas. Esta funcion es llamada por el systick cada
+	 *	vez que se vence su contador (1ms en este caso).
+	 *	Cuando el ontador de una tarea llega a su, fin se dispara una bandera de evento.
+	 *	Este evento es chequeado luego de la interrupcion generada por el systick en el main().
+	 *	Puede haber dos tipos de tareas, ciclicas o no ciclicas. En las ciclicas el
+	 *	contador se resetea cada vez q una tarea finaliza, en las no ciclicas el contador
+	 *	se setea solo cuando es necesario.
+	 */
+
+	// BOTONES
+	if(dht_interior.flag == 0 && dht_exterior.flag == 0 && display.flag == 0 && serial.flag.mostrar_valores == 0){
+
+		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3))
+		{
+			if(botones.contador_menu < 15){
+				botones.contador_menu++;
+				botones.flag.fin_menu = 0;
+			}
+		}
+		else{
+			if(botones.contador_menu >= 15){
+					GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+					FSM_menu();
+					display.flag = 1;
+					botones.contador_menu = 0;
+					botones.flag.fin_menu = 1; // boton presionado.
+			}
+		}
+
+		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_6)){
+			if(botones.contador_down < 15){
+				botones.contador_down++;
+				botones.flag.fin_down = 0; // boton presionado.
+			}
+		}
+		else{
+			if(botones.contador_down >= 15){
+				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+				FSM_abajo();
+				display.flag = 1;
+				botones.contador_down = 0;
+				botones.flag.fin_down = 1; // boton presionado.
+			}
+		}
+
+		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_5))
+		{
+			if(botones.contador_back < 15){
+				botones.contador_back++;
+			}
+		}
+		else{
+			if(botones.contador_back >= 15){
+				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+				FSM_back();
+				display.flag = 1;
+				botones.contador_back = 0;
+				botones.flag.fin_back = 0; // boton presionado.
+			}
+		}
+		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7))
+		{
+			if(botones.contador_up < 15){
+				botones.contador_up++;
+			}
+		}
+		else{
+			if(botones.contador_up >= 15){
+				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+				FSM_arriba();
+				display.flag = 1;
+				botones.contador_up = 0;
+				botones.flag.fin_up = 0; // boton presionado.
+			}
+		}
+
+		if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_1))
+		{
+			if(botones.contador_enter < 15){
+				botones.contador_enter++;
+			}
+		}
+		else{
+			if(botones.contador_enter >= 15){
+				GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
+				FSM_enter();
+				display.flag = 1;
+				botones.contador_enter = 0;
+				botones.flag.fin_enter = 0; // boton presionado.
+			}
+		}
+
+		if((botones.contador_menu + botones.contador_down + botones.contador_up + botones.contador_back + botones.contador_enter) >= 30){
+			GPIO_SetBits(GPIOD,GPIO_Pin_12); // Se enciende el led verde si se apretan los botones a la vez.
+		}
+		else{
+			GPIO_ResetBits(GPIOD,GPIO_Pin_12); // Se apaga el led si no se presiona el led o se apreta de a uno a la vez.
+
+		}
+
+		//Nivel de agua.
+		if(!GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_6))
+		{
+			control.flag.agua_tanque = 1;
+		}
+		else{
+			control.flag.agua_tanque = 0;
+		}
+	}
+
+	//	// Rutina DHT
+	if(dht_interior.flag){
+		if(dht_interior.timeout >= 1){
+			dht_interior.timeout--;
+		}
+
+		if(dht_interior.timeout <= 0){
+			dht_interior.flag_timeout = 1;
+		}
+	}
+
+	if(dht_interior.contador >= 1){
+		dht_interior.contador--;
+	}
+	else{
+		dht_interior.flag = 1;
+		dht_interior.contador = 2501;
+		dht_interior.flag_timeout = 0;
+		dht_interior.timeout = 1001; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
+	}
+
+	if(dht_exterior.flag){
+		if(dht_exterior.timeout >= 1){
+			dht_exterior.timeout--;
+		}
+
+		if(dht_exterior.timeout <= 0){
+			dht_exterior.flag_timeout = 1;
+		}
+	}
+
+	if(dht_exterior.contador >= 1){
+		dht_exterior.contador--;
+	}
+	else{
+		dht_exterior.flag = 1;
+		dht_exterior.contador = 2501;
+		dht_exterior.flag_timeout = 0;
+		dht_exterior.timeout = 1001; // Se le agrega un tiempo de timeout para esperar la funcion DHT11Start.
+	}
+	//
+	// Rutina LDR
+	if(ldr.contador >= 1){
+		ldr.contador--;
+	}
+	else{
+		ldr.flag.fin_contador = 1;
+		ldr.contador = 101; 		//Cada 100 mseg
+	}
+
+	// Ruitna YL-69
+	if(yl.contador >= 1){
+		yl.contador--;
+	}
+	else{
+		yl.flag = 1;
+		yl.contador = 101;
+	}
+
+	// Rutina del LED.
+	if(led.contador >= 1){
+		led.contador--;
+	}
+	else{
+		led.flag.fin_contador = (led.flag.fin_contador) ? 0 : 1;
+		led.contador = contador_led;
+	}
+
+	// Rutina display.
+	if(display.contador >= 1){
+		display.contador--;
+	}
+	else{
+		display.flag = 1;
+		display.contador = display.refresh_time;
+	}
+
+	// Rutina Serial.
+	if(serial.timeout >= 1){
+		serial.timeout--;
+	}
+	else if(serial.flag.comienzo_paquete){
+		serial.flag.comienzo_paquete = 0;
+		enviar_comando(":TMO,-,-!");
+	}
+
+	// Contador para el modo monitor
+	if(serial.contador_task >= 1){
+		serial.contador_task--;
+	}
+	else if(sistema.flag.modo_monitor_serial){
+		serial.contador_task = 1001;
+		serial.flag.mostrar_valores = 1;
+	}
+
+	// Contador para chequear cultivo.
+	if(cultivo.contador_aux >= 1 && cultivo.flag.control_activo){
+		cultivo.contador_aux--;
+	}
+	else if(cultivo.flag.control_activo){
+		cultivo.flag.fin_contador = 1;
+		cultivo.contador_aux = 10e3 + 1;
+	}
+}
+
 void task_manager(void){
 	/*	Funcion task_manager
 	 *	No recive ni devuelve un valor.
@@ -377,11 +498,7 @@ void task_manager(void){
 	 *	Estas tareas se realizan o no dependiendo de su flag de evento.
 	 */
 
-//	if(menu_flags.f_pausa){
-//		GPIO_SetBits(GPIOD,GPIO_Pin_13);
-		UB_LCD_2x16_String(0,0,"HOLA             ");
-		UB_LCD_2x16_String(0,1,"                 ");
-		display.refresh_time = 1001;
+	menu_task();
 //	}else{
 //		GPIO_ResetBits(GPIOD,GPIO_Pin_13);
 //	}
@@ -428,6 +545,178 @@ void task_manager(void){
 	//	if(cultivo.flag.control_activo){
 	//		control_temp_task();
 	//	}
+}
+
+void menu_task(){
+	char buffer[16];
+
+	if(menu_flags.f_pausa){
+
+		if(cultivo.flag.pause){
+			cultivo.flag.pause = 0;
+			UB_LCD_2x16_String(0,0,"PAUSA            ");
+			UB_LCD_2x16_String(0,1,"DESACTIVADA      ");
+			display.contador = 2001;
+		}
+		else{
+			cultivo.flag.pause = 1;
+			UB_LCD_2x16_String(0,0,"PAUSA            ");
+			UB_LCD_2x16_String(0,1,"ACTIVADA         ");
+			if(control.flag.fan_encendido){
+				apagar_ventilador();
+			}
+			if(control.flag.ventana_abierta){
+				cerrar_ventana();
+			}
+			if(control.flag.calentador_encendido){
+				GPIO_ResetBits(GPIOC,GPIO_Pin_4);
+			}
+			if(control.flag.bomba_encendida){
+				GPIO_ResetBits(GPIOC,GPIO_Pin_5);
+			}
+
+			display.contador = 2001;
+		}
+
+		menu_flags.f_pausa = 0;
+	}
+	if(menu_flags.f_cancelar){
+		UB_LCD_2x16_String(0,0,"Cancelar         ");
+		UB_LCD_2x16_String(0,1,"                 ");
+		display.contador = 2001;
+		cultivo.flag.control_activo = 0;
+		log_etapas();
+		menu_flags.f_cancelar = 0;
+	}
+	if(menu_flags.f_tomate){
+		UB_LCD_2x16_String(0,0,"Configurando     ");
+		UB_LCD_2x16_String(0,1,"Tomate           ");
+		display.contador = 2001;
+		configurar_cultivo_tomate();
+		menu_flags.f_tomate = 0;
+	}
+	if(menu_flags.f_zanahoria){
+		UB_LCD_2x16_String(0,0,"Configurando     ");
+		UB_LCD_2x16_String(0,1,"Zanahoria        ");
+		display.contador = 2001;
+		configurar_cultivo_zanahoria();
+		menu_flags.f_zanahoria = 0;
+	}
+	if(menu_flags.f_humedad){
+		sprintf(buffer,"Humedad: %d%%  ", yl.humedad);
+		UB_LCD_2x16_String(0,0,buffer);
+		UB_LCD_2x16_String(0,1,"                 ");
+		display.contador = 2001;
+		menu_flags.f_humedad = 0;
+	}
+	if(menu_flags.f_temp_ext){
+		UB_LCD_2x16_String(0,0,"Temp-ext         ");
+		UB_LCD_2x16_String(9,0,dht_exterior.temperatura_string);
+		UB_LCD_2x16_String(0,1,"                 ");
+		display.contador = 2001;
+		menu_flags.f_temp_ext = 0;
+	}
+	if(menu_flags.f_temp_int){
+		UB_LCD_2x16_String(0,0,"Temp-int         ");
+		UB_LCD_2x16_String(9,0,dht_interior.temperatura_string);
+		UB_LCD_2x16_String(0,1,"                 ");
+		display.contador = 2001;
+		menu_flags.f_temp_int = 0;
+	}
+	if(menu_flags.f_log){
+		UB_LCD_2x16_String(0,0,"Escribiendo      ");
+		UB_LCD_2x16_String(0,1,"Archivo log...   ");
+		display.contador = 2001;
+		log_etapas();
+		menu_flags.f_log = 0;
+	}
+	if(menu_flags.f_etapas){
+		if(cultivo.flag.control_activo){
+			UB_LCD_2x16_String(0,0,"Escribiendo      ");
+			UB_LCD_2x16_String(0,1,"Arch. etapas...  ");
+			display.contador = 2001;
+			backup_etapas();
+			menu_flags.f_etapas = 0;
+		}
+		else{
+			UB_LCD_2x16_String(0,0,"Error           ");
+			UB_LCD_2x16_String(0,1,"                ");
+			display.contador = 2001;
+			menu_flags.f_etapas = 0;
+		}
+	}
+
+	if(menu_flags.f_ventilador){
+		if(control.flag.fan_encendido){
+			UB_LCD_2x16_String(0,0,"Apagando     ");
+			UB_LCD_2x16_String(0,1,"Ventilador      ");
+			display.contador = 2001;
+			apagar_ventilador();
+			control.flag.fan_encendido = 0;
+		}
+		else{
+			UB_LCD_2x16_String(0,0,"Encendiendo     ");
+			UB_LCD_2x16_String(0,1,"Ventilador      ");
+			display.contador = 2001;
+			encender_ventilador();
+			control.flag.fan_encendido = 1;
+		}
+		menu_flags.f_ventilador = 0;
+	}
+
+	if(menu_flags.f_ventana){
+		if(control.flag.ventana_abierta){
+			UB_LCD_2x16_String(0,0,"Cerrando       ");
+			UB_LCD_2x16_String(0,1,"Ventana...     ");
+			display.contador = 2001;
+			cerrar_ventana();
+			control.flag.ventana_abierta = 0;
+		}
+		else{
+			UB_LCD_2x16_String(0,0,"Abriendo        ");
+			UB_LCD_2x16_String(0,1,"Ventana...      ");
+			display.contador = 2001;
+			abrir_ventana();
+			control.flag.ventana_abierta = 1;
+		}
+		menu_flags.f_ventana = 0;
+	}
+
+	if(menu_flags.f_calentador){
+		if(control.flag.calentador_encendido){
+			UB_LCD_2x16_String(0,0,"Apagando        ");
+			UB_LCD_2x16_String(0,1,"Calentador...   ");
+			display.contador = 2001;
+			GPIO_ResetBits(GPIOC,GPIO_Pin_4);
+			control.flag.calentador_encendido = 0;
+		}
+		else{
+			UB_LCD_2x16_String(0,0,"Encendiendo     ");
+			UB_LCD_2x16_String(0,1,"Calentador...   ");
+			display.contador = 2001;
+			GPIO_SetBits(GPIOC,GPIO_Pin_4);
+			control.flag.calentador_encendido = 1;
+		}
+		menu_flags.f_calentador = 0;
+	}
+
+	if(menu_flags.f_bomba){
+		if(control.flag.bomba_encendida){
+			UB_LCD_2x16_String(0,0,"Apagando        ");
+			UB_LCD_2x16_String(0,1,"Bomba...        ");
+			display.contador = 2001;
+			GPIO_ResetBits(GPIOC,GPIO_Pin_5);
+			control.flag.bomba_encendida = 0;
+		}
+		else{
+			UB_LCD_2x16_String(0,0,"Encendiendo     ");
+			UB_LCD_2x16_String(0,1,"Bomba...        ");
+			display.contador = 2001;
+			GPIO_SetBits(GPIOC,GPIO_Pin_5);
+			control.flag.bomba_encendida = 1;
+		}
+		menu_flags.f_bomba = 0;
+	}
 }
 
 void dht_interior_task(){
@@ -547,7 +836,7 @@ void display_task(){
 		if(!sistema.flag.conexion_serial){
 			//			char buffer[16];
 
-			if(display.estado <1){
+			if(display.estado <2){
 				display.estado++;
 			}
 			else{
@@ -560,6 +849,7 @@ void display_task(){
 					sprintf(buffer,"Etapa: %d       ", cultivo.etapa_actual);
 					UB_LCD_2x16_String(0,0,buffer);
 					UB_LCD_2x16_String(0,1,cultivo.nombre);
+					UB_LCD_2x16_String(6,1,"         ");
 					display.flag = 0;
 				}
 				else{
@@ -570,11 +860,23 @@ void display_task(){
 			};break;
 			case 1:{
 
-				sprintf(buffer,"    %d:%d       ",datatime.hours,datatime.minutes);
+				sprintf(buffer,"     %d:%d      ",datatime.hours,datatime.minutes);
 				UB_LCD_2x16_String(0,0,buffer);
 				UB_LCD_2x16_String(0,1,"                ");
 				display.flag = 0;
 
+			};break;
+			case 2:{
+				if(cultivo.flag.pause){
+					UB_LCD_2x16_String(0,0,"Control         ");
+					UB_LCD_2x16_String(0,1,"Desactivado     ");
+					display.flag = 0;
+				}
+				else if(cultivo.flag.control_activo){
+					UB_LCD_2x16_String(0,0,"Control         ");
+					UB_LCD_2x16_String(0,1,"Activado     ");
+					display.flag = 0;
+				}
 			};break;
 			default:{
 				UB_LCD_2x16_String(0,0,"Display-fail");
@@ -719,14 +1021,666 @@ void control_temp_task(){
 }
 void control_hum_task(void){
 	if(yl.humedad <= control.min_hum){
-		GPIO_SetBits(GPIOC,GPIO_Pin_5); // Se enciende la bomba.
-		control.flag.bomba_encendida = 1;
+		if(control.flag.agua_tanque){
+			GPIO_SetBits(GPIOC,GPIO_Pin_5); // Se enciende la bomba.
+			control.flag.bomba_encendida = 1;
+		}
 	}
 	else if(yl.humedad >= control.max_hum){
 		GPIO_ResetBits(GPIOC,GPIO_Pin_5); // Se apaga la bomba
 		control.flag.bomba_encendida = 0;
 	}
+
+	if(control.flag.bomba_encendida && !control.flag.agua_tanque){
+		GPIO_ResetBits(GPIOC,GPIO_Pin_5); // Se apaga la bomba
+		control.flag.bomba_encendida = 0;
+	}
 }
+
+
+// Tarea de serial.
+void serial_task(void){
+	/*	Funcion serial_task()
+	 * 	Se encarga de manejar los paquetes que van ingresando al MCU.
+	 * 	Llama a las distintas funciones que se encargan de ejecutar cada comando.
+	 */
+	char msj[50] = "";
+
+	if(serial.flag.fin_paquete){
+		if(!strcmp(serial.comando,"STR") && sistema.flag.conexion_serial){
+			GPIO_ToggleBits(GPIOD,GPIO_Pin_14);
+			GPIO_ToggleBits(GPIOC,GPIO_Pin_4 |GPIO_Pin_5);
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"ATR") && sistema.flag.conexion_serial){
+			datalogger_mejorado();
+			enviar_comando(":OKK,-,-!");
+		}
+		if(!strcmp(serial.comando,"SKR") && sistema.flag.conexion_serial){
+			// Muestra si se pudo leer la tarjeta SD.
+			enviar_comando(":OKK,-,-! ");
+			cargar_datos();
+			if(tarjeta_sd.flag.fallo_abrir_archivo){
+				enviar_comando(":SD,4,FAIL!\r\n");
+			}
+			else{
+				enviar_comando(":SD,2,OK!\r\n");
+				sprintf(msj,"TIPO_CULTIVO: %d.ESTADO_CULTIVO: %d.ETAPA_CULTIVO: %d.",cultivo.tipo,cultivo.flag.control_activo,cultivo.etapa_actual);
+				enviar_comando(msj);
+				enviar_comando("\r\n");
+				enviar_comando(mensaje_global);
+				strcpy(mensaje_global,"");
+				enviar_comando("\r\n");
+			}
+		}
+		if(!strcmp(serial.comando,"INI") && !sistema.flag.conexion_serial){
+			sistema.flag.conexion_serial = 1;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"DAY") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			serial_modificar_fecha();
+			TM_RTC_SetDateTime(&datatime,TM_RTC_Format_BIN);
+		}
+		if(!strcmp(serial.comando,"MOD_MIN_T") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			serial_modificar_minutos_t();
+		}
+		if(!strcmp(serial.comando,"MOD_MIN_Z") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			serial_modificar_minutos_z();
+		}
+		if(!strcmp(serial.comando,"MENU") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			FSM_menu();
+		}
+		if(!strcmp(serial.comando,"UP") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			FSM_arriba();
+		}
+		if(!strcmp(serial.comando,"DOWN") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			FSM_abajo();
+		}
+		if(!strcmp(serial.comando,"ENTER") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			FSM_enter();
+		}
+		if(!strcmp(serial.comando,"BACK") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			FSM_back();
+		}
+		if(!strcmp(serial.comando,"STP") && sistema.flag.conexion_serial){
+			sistema.flag.conexion_serial = 0;
+			sistema.flag.modo_monitor_serial = 0;
+			serial.flag.mostrar_valores = 0;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"PAUSE") && sistema.flag.conexion_serial){
+			cultivo.flag.pause = 1;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"CONTINUE") && sistema.flag.conexion_serial){
+			cultivo.flag.pause = 0;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"LED") && sistema.flag.conexion_serial){
+			contador_led = atoi(serial.datos);
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"DAT") && sistema.flag.conexion_serial){
+			cargar_datos();
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"TOM") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			configurar_cultivo_tomate();
+		}
+		if(!strcmp(serial.comando,"ZAN") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			configurar_cultivo_zanahoria();
+		}
+		if(!strcmp(serial.comando,"LOG") && !strcmp(serial.datos,"LOAD") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			log_etapas();
+		}
+		if(!strcmp(serial.comando,"VENTO") && sistema.flag.conexion_serial){
+			abrir_ventana();
+			control.flag.ventana_abierta = 1;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"VENTC") && sistema.flag.conexion_serial){
+			cerrar_ventana();
+			control.flag.ventana_abierta = 0;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"STOPV") && sistema.flag.conexion_serial){
+			parar_ventana();
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"FAN") && !strcmp(serial.datos,"ON") && sistema.flag.conexion_serial){
+			encender_ventilador();
+			control.flag.fan_encendido = 1;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"FAN") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
+			apagar_ventilador();
+			control.flag.fan_encendido = 0;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"CAL") && !strcmp(serial.datos,"ON") && sistema.flag.conexion_serial){
+			GPIO_SetBits(GPIOC,GPIO_Pin_4);
+			control.flag.calentador_encendido = 1;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"CAL") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
+			GPIO_ResetBits(GPIOC,GPIO_Pin_4);
+			control.flag.calentador_encendido = 0;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"BOMBA") && !strcmp(serial.datos,"ON") && sistema.flag.conexion_serial){
+			GPIO_SetBits(GPIOC,GPIO_Pin_5);
+			control.flag.bomba_encendida = 1;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"BOMBA") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
+			GPIO_ResetBits(GPIOC,GPIO_Pin_5);
+			control.flag.bomba_encendida = 0;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"VAR") && !strcmp(serial.datos,"TEMP") && sistema.flag.conexion_serial){
+			sprintf(msj,"VAR: %d,%d,%d\r\n",control.limite_delta_temp,control.max_temp_fan,control.min_temp_fan);
+			enviar_comando(msj);
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+
+		//Comandos para leer los archivos.
+		if(!strcmp(serial.comando,"LOG") && !strcmp(serial.datos,"READ") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			leer_log();
+			enviar_comando("\r\n");
+		}
+		if(!strcmp(serial.comando,"ETAPAS") && !strcmp(serial.datos,"READ") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-!\r\n");
+			leer_etapas();
+			enviar_comando("\r\n");
+		}
+
+
+		// Comando para modificar los valroes de temperaturas de las etapas.
+		if(!strcmp(serial.comando,"MOD_TEMP") && sistema.flag.conexion_serial){
+			serial_modificar_temp();
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"CK_TEMP") && sistema.flag.conexion_serial){
+			if(!strcmp(serial.datos,"TOM")){
+				sprintf(msj,"TEMP: %d,%d,%d\r\n",tomate[0].limite_delta_temp,tomate[0].max_temp_calentador,tomate[0].max_temp_fan);
+				enviar_comando(msj);
+			}
+			else if(!strcmp(serial.datos,"ZAN")){
+				sprintf(msj,"TEMP: %d,%d,%d\r\n",zanahoria[0].limite_delta_temp,zanahoria[0].max_temp_calentador,zanahoria[0].max_temp_fan);
+				enviar_comando(msj);
+			}
+
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"CK_MIN") && sistema.flag.conexion_serial){
+			if(!strcmp(serial.datos,"TOM")){
+				sprintf(msj,"Minutos: %d,%d,%d\r\n",tomate_minutos[0],tomate_minutos[1],tomate_minutos[2]);
+				enviar_comando(msj);
+			}
+			else if(!strcmp(serial.datos,"ZAN")){
+				sprintf(msj,"Minutos: %d,%d,%d\r\n",zanahoria_minutos[0],zanahoria_minutos[1],zanahoria_minutos[2]);
+				enviar_comando(msj);
+			}
+
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+
+
+		// Comado SDC SD card Coneccted, se chequea si se puede montar la tarjeta.
+		if(!strcmp(serial.comando,"SDC") && sistema.flag.conexion_serial){
+			enviar_comando(":OKK,-,-! ");
+			if(UB_Fatfs_Mount(MMC_0)==FATFS_OK){
+				enviar_comando(":SDC,8,Presente!\r\n");
+				UB_Fatfs_UnMount(MMC_0);
+			}
+			else{
+				enviar_comando(":SDC,8,Ausente!\r\n");
+			}
+
+		}
+		if(!strcmp(serial.comando,"MON") && !strcmp(serial.datos,"ON") && sistema.flag.conexion_serial){
+			sistema.flag.modo_monitor_serial = 1;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+		if(!strcmp(serial.comando,"MON") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
+			sistema.flag.modo_monitor_serial = 0;
+			enviar_comando(":OKK,-,-!\r\n");
+		}
+	}
+	serial.flag.fin_paquete = 0;
+
+	if(sistema.flag.modo_monitor_serial && serial.flag.mostrar_valores){ // Si se esta en modo monitor se muestra el valor cada vez q se
+		TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+		sprintf(msj,"%d:%d:%d",datatime.hours,datatime.minutes,datatime.seconds);
+		enviar_comando(msj);
+		enviar_comando(" DHTI: ");										//	vence el contador.
+		enviar_comando(dht_interior.temperatura_string);
+		enviar_comando(" DHTE: ");										//	vence el contador.
+		enviar_comando(dht_exterior.temperatura_string);
+		sprintf(msj," ERR-I: %d ERR-E %d", dht_interior.estado,dht_exterior.estado);
+		enviar_comando(msj);
+		sprintf(msj," LDR: %d", ldr.adc_cuentas);
+		enviar_comando(msj);
+		sprintf(msj," YL-69: %d, %d %%.AGUA %d\r\n", yl.adc_cuentas,yl.humedad,control.flag.agua_tanque);
+		enviar_comando(msj);
+		serial.flag.mostrar_valores = 0;
+	}
+}
+
+/// Funciones de la tarea serial.
+
+// Codigo para USART.
+void enviar_comando(char *cmd){
+	/*	Funcion enviar_comando
+	 * Envia una cadena a traves del USART3
+	 */
+	uint16_t n = strlen(cmd);
+	uint16_t i;
+	for(i=0;i<n;i++){
+		USART_SendData(USART3, cmd[i]); // Se envia el dato que ingreso.
+		while (USART_GetFlagStatus(USART3, USART_FLAG_TC) == RESET); // Se espera a que termine de enviar (NOTAR QUE DICE FLAG).
+	}
+}
+
+
+void serial_modificar_temp(){
+	//char temp_string[250];
+	char *temp;
+	uint8_t etapa = 0;
+	uint8_t tipo = 0;
+	///////////////Codigo que interpreta el texto////////////
+	temp = strtok(serial.datos," ,.-");
+
+	while(temp != NULL){
+		if(!strcmp("ETAPA",temp)){
+			temp = strtok(NULL," ,.-");
+			etapa = atoi(temp);
+		}
+		else if(!strcmp("TIPO",temp)){
+			temp = strtok(NULL," ,.-");
+			tipo = atoi(temp);
+		}
+		else if(!strcmp("MAX_FAN",temp)){
+			temp = strtok(NULL," ,.-");
+			if(tipo == 0)
+				tomate[etapa].max_temp_fan = atoi(temp);
+			else if(tipo == 1)
+				zanahoria[etapa].max_temp_fan = atoi(temp);
+		}
+		else if(!strcmp("MIN_FAN",temp)){
+			temp = strtok(NULL," ,.-");
+			if(tipo == 0)
+				tomate[etapa].min_temp_fan = atoi(temp);
+			else if(tipo == 1)
+				zanahoria[etapa].min_temp_fan = atoi(temp);
+		}
+		else if(!strcmp("MIN_CAL",temp)){
+			temp = strtok(NULL," ,.-");
+			if(tipo == 0)
+				tomate[etapa].min_temp_calentador = atoi(temp);
+			else if(tipo == 1)
+				zanahoria[etapa].min_temp_calentador = atoi(temp);
+		}
+		else if(!strcmp("MAX_CAL",temp)){
+			temp = strtok(NULL," ,.-");
+			if(tipo == 0)
+				tomate[etapa].max_temp_calentador = atoi(temp);
+			else if(tipo == 1)
+				zanahoria[etapa].max_temp_calentador = atoi(temp);
+		}
+		temp = strtok(NULL," ,.-");
+
+	}
+	/////////////////////////////////////////////////////////
+}
+
+void serial_modificar_fecha(){
+	//char temp_string[250];
+	char *temp;
+	///////////////Codigo que interpreta el texto////////////
+	temp = strtok(serial.datos," ,.-");
+
+	while(temp != NULL){
+		if(!strcmp("YEAR",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.year = atoi(temp);
+		}
+		else if(!strcmp("MON",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.month = atoi(temp);
+		}
+		else if(!strcmp("DATE",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.date = atoi(temp);
+		}
+		else if(!strcmp("DAY",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.day = atoi(temp);
+		}
+		else if(!strcmp("HOUR",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.hours = atoi(temp);
+		}
+		else if(!strcmp("MIN",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.minutes = atoi(temp);
+		}
+		else if(!strcmp("SEC",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.seconds = atoi(temp);
+		}
+		temp = strtok(NULL," ,.-");
+
+	}
+	/////////////////////////////////////////////////////////
+}
+
+void serial_modificar_minutos_t(){
+	char *temp;
+	///////////////Codigo que interpreta el texto////////////
+	temp = strtok(serial.datos," ,.-");
+
+	while(temp != NULL){
+		if(!strcmp("E0",temp)){
+			temp = strtok(NULL," ,.-");
+			tomate_minutos[0] = atoi(temp);
+		}
+		else if(!strcmp("E1",temp)){
+			temp = strtok(NULL," ,.-");
+			tomate_minutos[1] = atoi(temp);
+		}
+		else if(!strcmp("E2",temp)){
+			temp = strtok(NULL," ,.-");
+			tomate_minutos[2] = atoi(temp);
+		}
+		temp = strtok(NULL," ,.-");
+
+	}
+	/////////////////////////////////////////////////////////
+}
+
+void serial_modificar_minutos_z(){
+	char *temp;
+	///////////////Codigo que interpreta el texto////////////
+	temp = strtok(serial.datos," ,.-");
+
+	while(temp != NULL){
+		if(!strcmp("E0",temp)){
+			temp = strtok(NULL," ,.-");
+			zanahoria_minutos[0] = atoi(temp);
+		}
+		else if(!strcmp("E1",temp)){
+			temp = strtok(NULL," ,.-");
+			zanahoria_minutos[1] = atoi(temp);
+		}
+		else if(!strcmp("E2",temp)){
+			temp = strtok(NULL," ,.-");
+			zanahoria_minutos[2] = atoi(temp);
+		}
+		temp = strtok(NULL," ,.-");
+
+	}
+	/////////////////////////////////////////////////////////
+}
+
+void leer_log(){
+	FIL myFile;   // Filehandler
+	char temp_string[250];
+	uint16_t cant_bytes_archivo = 0;
+	// se lee el archivo LOG de la sd.
+	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+		// Media mounten
+		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+			// File zum schreiben im root neu anlegen
+			if(UB_Fatfs_OpenFile(&myFile, "0:/LOG.txt", F_RD)==FATFS_OK) {
+				// ein paar Textzeilen in das File schreiben
+				cant_bytes_archivo = UB_Fatfs_FileSize(&myFile);
+				if(UB_Fatfs_ReadString(&myFile,temp_string,cant_bytes_archivo) == FATFS_OK){
+					tarjeta_sd.flag.fallo_abrir_archivo = 0;
+					enviar_comando(temp_string);
+
+				}
+				else{
+					tarjeta_sd.flag.fallo_abrir_archivo = 1;
+				}
+				// File schliessen
+				UB_Fatfs_CloseFile(&myFile);
+			}
+			// Media unmounten
+			UB_Fatfs_UnMount(MMC_0);
+		}
+	}
+}
+
+void leer_etapas(){
+	FIL myFile;   // Filehandler
+	char temp_string[250];
+	uint16_t cant_bytes_archivo = 0;
+	// se lee el archivo LOG de la sd.
+	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+		// Media mounten
+		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+			// File zum schreiben im root neu anlegen
+			if(UB_Fatfs_OpenFile(&myFile, "0:/ETAPAS.txt", F_RD)==FATFS_OK) {
+				// ein paar Textzeilen in das File schreiben
+				cant_bytes_archivo = UB_Fatfs_FileSize(&myFile);
+				if(UB_Fatfs_ReadString(&myFile,temp_string,cant_bytes_archivo) == FATFS_OK){
+					tarjeta_sd.flag.fallo_abrir_archivo = 0;
+					enviar_comando(temp_string);
+				}
+				else{
+					tarjeta_sd.flag.fallo_abrir_archivo = 1;
+				}
+				// File schliessen
+				UB_Fatfs_CloseFile(&myFile);
+			}
+			// Media unmounten
+			UB_Fatfs_UnMount(MMC_0);
+		}
+	}
+}
+///
+
+///Funciones del control de cultivo.
+
+void configurar_cultivo_tomate(void){
+	/*	Funcion configurar_cultivo_tomate()
+	 * 	Funcion que inicializa los valores de control de cultivo.
+	 *	Se configuran las fechas de las etapas y las variables objetivo para cada una de ellas.
+	 *	Ademas se comprueba que las fechas ingresadas sean correctas, si todas lo son se activa el seguimiento.
+	 */
+
+	//	uint8_t i,n_etapas_validas = 0;
+	//	char msj[30] = "";
+
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+
+	//
+	//Se fijan las alarmas y luego se las guarda en la tarjeta SD como backup.
+	//
+
+	// configurar_horario_etapa(n_etapa,minutos)
+	cultivo.etapa[0].year = datatime.year;
+	cultivo.etapa[0].month = datatime.month;
+	cultivo.etapa[0].hours = datatime.hours;
+	cultivo.etapa[0].minutes = datatime.minutes + MIN_T_ETAPA_0;
+	cultivo.etapa[0].seconds = datatime.seconds;
+	cultivo.etapa[0].date = datatime.date;
+	// Se asegura que la fecha sea valida.
+	//	if((datatime.day + 7) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
+	//		cultivo.etapa[0].day = 7 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
+	//	}
+	//	else
+	//		cultivo.etapa[0].day = datatime.day + 7;
+
+	cultivo.etapa[1].year = datatime.year;
+	cultivo.etapa[1].month = datatime.month;
+	cultivo.etapa[1].hours = datatime.hours;
+	cultivo.etapa[1].minutes = datatime.minutes + MIN_T_ETAPA_0 + MIN_T_ETAPA_1;
+	cultivo.etapa[1].seconds = datatime.seconds;
+	// Se asegura que la fecha sea valida.
+	//	if((datatime.day + 14) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
+	//		cultivo.etapa[1].day = 14 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
+	//	}
+	//	else
+	//		cultivo.etapa[1].day = datatime.day + 14;
+	cultivo.etapa[1].date = datatime.date;
+
+	cultivo.etapa[2].year = datatime.year;
+	cultivo.etapa[2].month = datatime.month;
+	cultivo.etapa[2].hours = datatime.hours;
+	cultivo.etapa[2].minutes = datatime.minutes + MIN_T_ETAPA_0 + MIN_T_ETAPA_1 + MIN_T_ETAPA_2;
+	cultivo.etapa[2].seconds = datatime.seconds;
+	cultivo.etapa[2].date = datatime.date;
+	// Se asegura que la fecha sea valida.
+	//	if((datatime.day + 21) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
+	//		cultivo.etapa[2].day = 21 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
+	//	}
+	//	else
+	//		cultivo.etapa[2].day = datatime.day + 21;
+
+	//
+	//  Se guardan los valores de las etapas en la SD
+	//
+	enviar_comando("C\r\n");
+	backup_etapas(); // Se guardan los valoers de las etapas en la SD.
+	enviar_comando("F\r\n");
+
+	//
+	//  Se cofigura la primer alarma.
+	//
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+	cultivo.etapa_actual = 0;
+	AlarmTime.hours = cultivo.etapa[0].hours;
+	AlarmTime.minutes = cultivo.etapa[0].minutes;
+	AlarmTime.seconds = cultivo.etapa[0].seconds;
+	AlarmTime.day = cultivo.etapa[0].date;
+	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
+	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
+
+	// Se setean las variables de control de a cuerdo a la etapa actual.
+	control.limite_delta_temp = tomate[cultivo.etapa_actual].limite_delta_temp;
+	control.max_temp_fan = tomate[cultivo.etapa_actual].max_temp_fan;
+	control.min_temp_fan = tomate[cultivo.etapa_actual].min_temp_fan;
+	control.max_temp_calentador = tomate[cultivo.etapa_actual].max_temp_calentador;
+	control.min_temp_calentador = tomate[cultivo.etapa_actual].min_temp_calentador;
+	control.max_hum = tomate_h[cultivo.etapa_actual].max_hum;
+	control.min_hum = tomate_h[cultivo.etapa_actual].min_hum;
+
+	strcpy(cultivo.nombre,"Tomate"); // Se guarda el nombre del cultivo.
+	cultivo.tipo = 0; // Se guarda el tipo de cultivo TOMATE = 0.
+
+	// Se habilitan las banderas de control.
+	cultivo.flag.control_activo = 1;
+	cultivo.flag.cambio_etapa = 1;
+	sistema.flag.first_dat_temp_int = 1;
+}
+
+void configurar_cultivo_zanahoria(void){
+	/*	Funcion configurar_cultivo_tomate()
+	 * 	Funcion que inicializa los valores de control de cultivo.
+	 *	Se configuran las fechas de las etapas y las variables objetivo para cada una de ellas.
+	 *	Ademas se comprueba que las fechas ingresadas sean correctas, si todas lo son se activa el seguimiento.
+	 */
+
+	//	uint8_t i,n_etapas_validas = 0;
+	//	char msj[30] = "";
+
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+
+	//
+	//Se fijan las alarmas y luego se las guarda en la tarjeta SD como backup.
+	//
+	cultivo.tipo = 1; // Se guarda el tipo de cultivo TOMATE = 0.
+	configurar_horario_etapa(0,tomate_minutos[0]);
+	configurar_horario_etapa(1,tomate_minutos[1]);
+	configurar_horario_etapa(2,tomate_minutos[2]);
+
+	//
+	//  Se guardan los valores de las etapas en la SD
+	//
+	enviar_comando("C\r\n");
+	backup_etapas(); // Se guardan los valoers de las etapas en la SD.
+	enviar_comando("F\r\n");
+
+	//
+	//  Se cofigura la primer alarma.
+	//
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+	cultivo.etapa_actual = 0;
+	AlarmTime.hours = cultivo.etapa[0].hours;
+	AlarmTime.minutes = cultivo.etapa[0].minutes;
+	AlarmTime.seconds = cultivo.etapa[0].seconds;
+	AlarmTime.day = cultivo.etapa[0].date;
+	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
+	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
+
+	// Se setean las variables de control de a cuerdo a la etapa actual.
+	control.limite_delta_temp = zanahoria[cultivo.etapa_actual].limite_delta_temp;
+	control.max_temp_fan = zanahoria[cultivo.etapa_actual].max_temp_fan;
+	control.min_temp_fan = zanahoria[cultivo.etapa_actual].min_temp_fan;
+	control.max_temp_calentador = zanahoria[cultivo.etapa_actual].max_temp_calentador;
+	control.min_temp_calentador = zanahoria[cultivo.etapa_actual].min_temp_calentador;
+	control.max_hum = zanahoria_h[cultivo.etapa_actual].max_hum;
+	control.min_hum = zanahoria_h[cultivo.etapa_actual].min_hum;
+
+	strcpy(cultivo.nombre,"Zanahoria"); // Se guarda el nombre del cultivo.
+	cultivo.tipo = 1; // Se guarda el tipo de cultivo TOMATE = 0.
+
+	// Se habilitan las banderas de control.
+	cultivo.flag.control_activo = 1;
+	cultivo.flag.cambio_etapa = 1;
+}
+
+void configurar_horario_etapa(uint8_t n_etapa,uint8_t valor){
+
+	/* Funcion configurar horario etapa
+	 * Recibe el numero de la etapa y la cantidad de dias que dura la etapa.
+	 * Configura la etapa q es especificada.
+	 */
+	 uint8_t horas_aux = 0;
+
+	 if(valor <= 60){
+		 if((datatime.minutes + valor)>59){
+				 cultivo.etapa[n_etapa].minutes = (datatime.minutes + valor) - 60;
+				 horas_aux++;
+			 }
+			 else{
+				 cultivo.etapa[n_etapa].minutes = (datatime.minutes + valor);
+			 }
+
+			cultivo.etapa[n_etapa].year = datatime.year;
+			cultivo.etapa[n_etapa].hours = datatime.hours + horas_aux;
+			cultivo.etapa[n_etapa].seconds = datatime.seconds;
+			cultivo.etapa[n_etapa].date = datatime.date;
+	 }
+	 else{
+		 cultivo.etapa[n_etapa].year = datatime.year;
+		 cultivo.etapa[n_etapa].hours = datatime.hours;
+		 cultivo.etapa[n_etapa].seconds = datatime.seconds;
+		 cultivo.etapa[n_etapa].minutes = (datatime.minutes + 1);
+		 cultivo.etapa[n_etapa].date = datatime.date;
+	 }
+
+
+}
+
 
 
 
@@ -948,101 +1902,12 @@ void cargar_datos(){
 
 	}
 }
+
+
 // cual?
 
 //configurar_cultivo_tomate();
 
-void serial_modificar_temp(){
-	//char temp_string[250];
-	char *temp;
-	uint8_t etapa = 0;
-	uint8_t tipo = 0;
-	///////////////Codigo que interpreta el texto////////////
-	temp = strtok(serial.datos," ,.-");
-
-	while(temp != NULL){
-		if(!strcmp("ETAPA",temp)){
-			temp = strtok(NULL," ,.-");
-			etapa = atoi(temp);
-		}
-		else if(!strcmp("TIPO",temp)){
-			temp = strtok(NULL," ,.-");
-			tipo = atoi(temp);
-		}
-		else if(!strcmp("MAX_FAN",temp)){
-			temp = strtok(NULL," ,.-");
-			if(tipo == 0)
-				tomate[etapa].max_temp_fan = atoi(temp);
-			else if(tipo == 1)
-				zanahoria[etapa].max_temp_fan = atoi(temp);
-		}
-		else if(!strcmp("MIN_FAN",temp)){
-			temp = strtok(NULL," ,.-");
-			if(tipo == 0)
-				tomate[etapa].min_temp_fan = atoi(temp);
-			else if(tipo == 1)
-				zanahoria[etapa].min_temp_fan = atoi(temp);
-		}
-		else if(!strcmp("MIN_CAL",temp)){
-			temp = strtok(NULL," ,.-");
-			if(tipo == 0)
-				tomate[etapa].min_temp_calentador = atoi(temp);
-			else if(tipo == 1)
-				zanahoria[etapa].min_temp_calentador = atoi(temp);
-		}
-		else if(!strcmp("MAX_CAL",temp)){
-			temp = strtok(NULL," ,.-");
-			if(tipo == 0)
-				tomate[etapa].max_temp_calentador = atoi(temp);
-			else if(tipo == 1)
-				zanahoria[etapa].max_temp_calentador = atoi(temp);
-		}
-		temp = strtok(NULL," ,.-");
-
-	}
-	/////////////////////////////////////////////////////////
-}
-
-void serial_modificar_fecha(){
-	//char temp_string[250];
-	char *temp;
-	///////////////Codigo que interpreta el texto////////////
-	temp = strtok(serial.datos," ,.-");
-
-	while(temp != NULL){
-		if(!strcmp("YEAR",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.year = atoi(temp);
-		}
-		else if(!strcmp("MON",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.month = atoi(temp);
-		}
-		else if(!strcmp("DATE",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.date = atoi(temp);
-		}
-		else if(!strcmp("DAY",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.day = atoi(temp);
-		}
-		else if(!strcmp("HOUR",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.hours = atoi(temp);
-		}
-		else if(!strcmp("MIN",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.minutes = atoi(temp);
-		}
-		else if(!strcmp("SEC",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.seconds = atoi(temp);
-		}
-		temp = strtok(NULL," ,.-");
-
-	}
-	/////////////////////////////////////////////////////////
-}
 
 int fecha_valida(TM_RTC_t fecha_control){
 	/*	Funcion fecha_valida()
@@ -1071,278 +1936,6 @@ int fecha_valida(TM_RTC_t fecha_control){
 		return 1;
 }
 
-void configurar_cultivo_tomate(void){
-	/*	Funcion configurar_cultivo_tomate()
-	 * 	Funcion que inicializa los valores de control de cultivo.
-	 *	Se configuran las fechas de las etapas y las variables objetivo para cada una de ellas.
-	 *	Ademas se comprueba que las fechas ingresadas sean correctas, si todas lo son se activa el seguimiento.
-	 */
-
-	//	uint8_t i,n_etapas_validas = 0;
-	//	char msj[30] = "";
-
-	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-
-	//
-	//Se fijan las alarmas y luego se las guarda en la tarjeta SD como backup.
-	//
-
-	// configurar_horario_etapa(n_etapa,minutos)
-	cultivo.etapa[0].year = datatime.year;
-	cultivo.etapa[0].month = datatime.month;
-	cultivo.etapa[0].hours = datatime.hours;
-	cultivo.etapa[0].minutes = datatime.minutes+1;
-	cultivo.etapa[0].seconds = datatime.seconds;
-	cultivo.etapa[0].date = datatime.date;
-	// Se asegura que la fecha sea valida.
-	//	if((datatime.day + 7) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
-	//		cultivo.etapa[0].day = 7 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
-	//	}
-	//	else
-	//		cultivo.etapa[0].day = datatime.day + 7;
-
-	cultivo.etapa[1].year = datatime.year;
-	cultivo.etapa[1].month = datatime.month;
-	cultivo.etapa[1].hours = datatime.hours;
-	cultivo.etapa[1].minutes = datatime.minutes+2;
-	cultivo.etapa[1].seconds = datatime.seconds;
-	// Se asegura que la fecha sea valida.
-	//	if((datatime.day + 14) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
-	//		cultivo.etapa[1].day = 14 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
-	//	}
-	//	else
-	//		cultivo.etapa[1].day = datatime.day + 14;
-	cultivo.etapa[1].date = datatime.date;
-
-	cultivo.etapa[2].year = datatime.year;
-	cultivo.etapa[2].month = datatime.month;
-	cultivo.etapa[2].hours = datatime.hours;
-	cultivo.etapa[2].minutes = datatime.minutes+3;
-	cultivo.etapa[2].seconds = datatime.seconds;
-	cultivo.etapa[2].date = datatime.date;
-	// Se asegura que la fecha sea valida.
-	//	if((datatime.day + 21) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
-	//		cultivo.etapa[2].day = 21 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
-	//	}
-	//	else
-	//		cultivo.etapa[2].day = datatime.day + 21;
-
-	//
-	//  Se guardan los valores de las etapas en la SD
-	//
-	enviar_comando("C\r\n");
-	backup_etapas(); // Se guardan los valoers de las etapas en la SD.
-	enviar_comando("F\r\n");
-
-	//
-	//  Se cofigura la primer alarma.
-	//
-	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-	cultivo.etapa_actual = 0;
-	AlarmTime.hours = cultivo.etapa[0].hours;
-	AlarmTime.minutes = cultivo.etapa[0].minutes;
-	AlarmTime.seconds = cultivo.etapa[0].seconds;
-	AlarmTime.day = cultivo.etapa[0].date;
-	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
-	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
-
-	// Se setean las variables de control de a cuerdo a la etapa actual.
-	control.limite_delta_temp = tomate[cultivo.etapa_actual].limite_delta_temp;
-	control.max_temp_fan = tomate[cultivo.etapa_actual].max_temp_fan;
-	control.min_temp_fan = tomate[cultivo.etapa_actual].min_temp_fan;
-	control.max_temp_calentador = tomate[cultivo.etapa_actual].max_temp_calentador;
-	control.min_temp_calentador = tomate[cultivo.etapa_actual].min_temp_calentador;
-	control.max_hum = tomate_h[cultivo.etapa_actual].max_hum;
-	control.min_hum = tomate_h[cultivo.etapa_actual].min_hum;
-
-	strcpy(cultivo.nombre,"Tomate"); // Se guarda el nombre del cultivo.
-	cultivo.tipo = 0; // Se guarda el tipo de cultivo TOMATE = 0.
-
-	// Se habilitan las banderas de control.
-	cultivo.flag.control_activo = 1;
-	cultivo.flag.cambio_etapa = 1;
-	sistema.flag.first_dat_temp_int = 1;
-}
-
-void configurar_cultivo_zanahoria(void){
-	/*	Funcion configurar_cultivo_tomate()
-	 * 	Funcion que inicializa los valores de control de cultivo.
-	 *	Se configuran las fechas de las etapas y las variables objetivo para cada una de ellas.
-	 *	Ademas se comprueba que las fechas ingresadas sean correctas, si todas lo son se activa el seguimiento.
-	 */
-
-	//	uint8_t i,n_etapas_validas = 0;
-	//	char msj[30] = "";
-
-	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-
-	//
-	//Se fijan las alarmas y luego se las guarda en la tarjeta SD como backup.
-	//
-	configurar_horario_etapa(0,1);
-	configurar_horario_etapa(1,2);
-	configurar_horario_etapa(2,3);
-
-	//
-	//  Se guardan los valores de las etapas en la SD
-	//
-	enviar_comando("C\r\n");
-	backup_etapas(); // Se guardan los valoers de las etapas en la SD.
-	enviar_comando("F\r\n");
-
-	//
-	//  Se cofigura la primer alarma.
-	//
-	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-	cultivo.etapa_actual = 0;
-	AlarmTime.hours = cultivo.etapa[0].hours;
-	AlarmTime.minutes = cultivo.etapa[0].minutes;
-	AlarmTime.seconds = cultivo.etapa[0].seconds;
-	AlarmTime.day = cultivo.etapa[0].date;
-	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
-	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
-
-	// Se setean las variables de control de a cuerdo a la etapa actual.
-	control.limite_delta_temp = zanahoria[cultivo.etapa_actual].limite_delta_temp;
-	control.max_temp_fan = zanahoria[cultivo.etapa_actual].max_temp_fan;
-	control.min_temp_fan = zanahoria[cultivo.etapa_actual].min_temp_fan;
-	control.max_temp_calentador = zanahoria[cultivo.etapa_actual].max_temp_calentador;
-	control.min_temp_calentador = zanahoria[cultivo.etapa_actual].min_temp_calentador;
-	control.max_hum = zanahoria_h[cultivo.etapa_actual].max_hum;
-	control.min_hum = zanahoria_h[cultivo.etapa_actual].min_hum;
-
-	strcpy(cultivo.nombre,"Zanahoria"); // Se guarda el nombre del cultivo.
-	cultivo.tipo = 1; // Se guarda el tipo de cultivo TOMATE = 0.
-
-	// Se habilitan las banderas de control.
-	cultivo.flag.control_activo = 1;
-	cultivo.flag.cambio_etapa = 1;
-}
-
-void configurar_horario_etapa(uint8_t n_etapa,uint8_t valor){
-
-	/* Funcion configurar horario etapa
-	 * Recibe el numero de la etapa y la cantidad de dias que dura la etapa.
-	 * Configura la etapa q es especificada.
-	 */
-	TM_RTC_t aux = {0,0,0,0,0,0,0};
-
-	//dias a dias,meses,anos
-	if(valor > 29){
-		aux.date = valor%30; // cantidad de dias.
-		aux.month = valor/30; // cantidad de meses.
-		if(aux.month > 11){
-			aux.year= aux.month/12; // cantidad de anios.
-			aux.month = aux.month%12; // cantidad de meses.
-			aux.date -= 5; // cantidad de dias.
-		}
-	}
-	else{
-		aux.date = valor;
-	}
-
-	if((datatime.date + aux.date) > 29){ // Si se pasa de dias aumenta el mes.
-		aux.month++;
-	}
-	if((datatime.month + aux.month) > 12){ // Si se pasa de meses aumenta el año.
-		cultivo.etapa[n_etapa].month = (datatime.month + aux.month) - 12;
-		aux.year++;
-	}
-	else{
-		cultivo.etapa[n_etapa].month = (datatime.month + aux.month);
-	}
-	if((datatime.date + aux.date) > 30){ // El 31 debe serl el numero de dias del cultivo->month - 1
-		cultivo.etapa[n_etapa].day = aux.date - (30-datatime.date);
-	}
-	else{
-		cultivo.etapa[n_etapa].day = datatime.date + aux.date;
-	}
-
-	cultivo.etapa[n_etapa].year = datatime.year + aux.year;
-	cultivo.etapa[n_etapa].minutes = datatime.minutes;
-	cultivo.etapa[n_etapa].hours = datatime.hours;
-	cultivo.etapa[n_etapa].seconds = datatime.seconds;
-}
-
-// Codigo para USART.
-void enviar_comando(char *cmd){
-	/*	Funcion enviar_comando
-	 * Envia una cadena a traves del USART3
-	 */
-	uint16_t n = strlen(cmd);
-	uint16_t i;
-	for(i=0;i<n;i++){
-		USART_SendData(USART3, cmd[i]); // Se envia el dato que ingreso.
-		while (USART_GetFlagStatus(USART3, USART_FLAG_TC) == RESET); // Se espera a que termine de enviar (NOTAR QUE DICE FLAG).
-	}
-}
-
-static void USART3_Config(void)
-{
-	/*	Funcion USART3_Config
-	 * 	Configura los pines necesarios para la conexion a traves de RS232.
-	 * 	Ademas inicializa las interrupciones para el USART3 en modo recepcion.
-	 */
-	GPIO_InitTypeDef GPIO_InitStructure;
-	USART_InitTypeDef USART_InitStructure;
-	/* USART IOs configuration ***********************************/
-	/* Enable GPIOC clock */
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
-	/* Connect PC10 to USART3_Tx */
-	GPIO_PinAFConfig(GPIOD, GPIO_PinSource8, GPIO_AF_USART3);
-	/* Connect PC11 to USART3_Rx*/
-	GPIO_PinAFConfig(GPIOD, GPIO_PinSource9, GPIO_AF_USART3);
-	/* Configure USART3_Tx and USART3_Rx as alternate function */
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz; // estaba en 50MHz
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	GPIO_Init(GPIOD, &GPIO_InitStructure);
-	/* USART configuration ***************************************/
-	/* USART3 configured as follow:
-- BaudRate = 115200 baud
-- Word Length = 8 Bits
-- One Stop Bit
-- No parity
-- Hardware flow control disabled (RTS and CTS signals)
-- Receive and transmit enabled
-	 */
-	/* Enable USART3 clock */
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
-	USART_InitStructure.USART_BaudRate = 9600;
-	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-	USART_InitStructure.USART_StopBits = USART_StopBits_1;
-	USART_InitStructure.USART_Parity = USART_Parity_No;
-	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
-	USART_Init(USART3, &USART_InitStructure);
-	/* Enable USART3 */
-	USART_Cmd(USART3, ENABLE);
-
-	//USART1 is more important than USART2, so it has lower sub priority number
-	NVIC_InitTypeDef NVIC_InitStruct;
-
-	NVIC_InitStruct.NVIC_IRQChannel = USART3_IRQn;
-	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 10;
-	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
-	NVIC_Init(&NVIC_InitStruct);
-
-	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE); // Se habilitan las interrupciones cuando se recibe un dato.
-}
-
-void activar_alarma(void){
-	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-	/* Set alarm B each 20th day in a month */
-	/* Alarm will be first triggered 10 seconds later as time is configured for RTC */
-	AlarmTime.hours = datatime.hours;
-	AlarmTime.minutes = datatime.minutes+1;
-	AlarmTime.seconds = datatime.seconds;
-	AlarmTime.day = datatime.day;
-	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
-	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
-}
 
 void backup_etapas(void){
 	FIL myFile;   // Filehandler
@@ -1449,205 +2042,21 @@ void datalogger_mejorado(void){
 	}
 }
 
-// Tarea de serial.
-void serial_task(void){
-	/*	Funcion serial_task()
-	 * 	Se encarga de manejar los paquetes que van ingresando al MCU.
-	 * 	Llama a las distintas funciones que se encargan de ejecutar cada comando.
-	 */
-	char msj[50] = "";
-
-	if(serial.flag.fin_paquete){
-		if(!strcmp(serial.comando,"STR") && sistema.flag.conexion_serial){
-			GPIO_ToggleBits(GPIOD,GPIO_Pin_14);
-			GPIO_ToggleBits(GPIOC,GPIO_Pin_4 |GPIO_Pin_5);
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"ATR") && sistema.flag.conexion_serial){
-			datalogger_mejorado();
-			enviar_comando(":OKK,-,-!");
-		}
-		if(!strcmp(serial.comando,"SKR") && sistema.flag.conexion_serial){
-			// Muestra si se pudo leer la tarjeta SD.
-			enviar_comando(":OKK,-,-! ");
-			cargar_datos();
-			if(tarjeta_sd.flag.fallo_abrir_archivo){
-				enviar_comando(":SD,4,FAIL!\r\n");
-			}
-			else{
-				enviar_comando(":SD,2,OK!\r\n");
-				sprintf(msj,"TIPO_CULTIVO: %d.ESTADO_CULTIVO: %d.ETAPA_CULTIVO: %d.",cultivo.tipo,cultivo.flag.control_activo,cultivo.etapa_actual);
-				enviar_comando(msj);
-				enviar_comando("\r\n");
-				enviar_comando(mensaje_global);
-				strcpy(mensaje_global,"");
-				enviar_comando("\r\n");
-			}
-		}
-		if(!strcmp(serial.comando,"INI") && !sistema.flag.conexion_serial){
-			sistema.flag.conexion_serial = 1;
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"DAY") && sistema.flag.conexion_serial){
-			enviar_comando(":OKK,-,-!\r\n");
-			serial_modificar_fecha();
-			TM_RTC_SetDateTime(&datatime,TM_RTC_Format_BIN);
-		}
-		if(!strcmp(serial.comando,"MENU") && sistema.flag.conexion_serial){
-			enviar_comando(":OKK,-,-!\r\n");
-			FSM_menu();
-		}
-		if(!strcmp(serial.comando,"UP") && sistema.flag.conexion_serial){
-			enviar_comando(":OKK,-,-!\r\n");
-			FSM_arriba();
-		}
-		if(!strcmp(serial.comando,"DOWN") && sistema.flag.conexion_serial){
-			enviar_comando(":OKK,-,-!\r\n");
-			FSM_abajo();
-		}
-		if(!strcmp(serial.comando,"ENTER") && sistema.flag.conexion_serial){
-			enviar_comando(":OKK,-,-!\r\n");
-			FSM_enter();
-		}
-		if(!strcmp(serial.comando,"BACK") && sistema.flag.conexion_serial){
-			enviar_comando(":OKK,-,-!\r\n");
-			FSM_back();
-		}
-		if(!strcmp(serial.comando,"STP") && sistema.flag.conexion_serial){
-			sistema.flag.conexion_serial = 0;
-			sistema.flag.modo_monitor_serial = 0;
-			serial.flag.mostrar_valores = 0;
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"PAUSE") && sistema.flag.conexion_serial){
-			cultivo.flag.pause = 1;
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"CONTINUE") && sistema.flag.conexion_serial){
-			cultivo.flag.pause = 0;
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"LED") && sistema.flag.conexion_serial){
-			contador_led = atoi(serial.datos);
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"DAT") && sistema.flag.conexion_serial){
-			cargar_datos();
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"TOM") && sistema.flag.conexion_serial){
-			enviar_comando(":OKK,-,-!\r\n");
-			configurar_cultivo_tomate();
-		}
-		if(!strcmp(serial.comando,"ZAN") && sistema.flag.conexion_serial){
-			enviar_comando(":OKK,-,-!\r\n");
-			configurar_cultivo_zanahoria();
-		}
-		if(!strcmp(serial.comando,"LOG") && sistema.flag.conexion_serial){
-			enviar_comando(":OKK,-,-!\r\n");
-			log_etapas();
-		}
-		if(!strcmp(serial.comando,"VENTO") && sistema.flag.conexion_serial){
-			abrir_ventana();
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"VENTC") && sistema.flag.conexion_serial){
-			cerrar_ventana();
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"STOPV") && sistema.flag.conexion_serial){
-			parar_ventana();
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"FAN") && !strcmp(serial.datos,"ON") && sistema.flag.conexion_serial){
-			encender_ventilador();
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"FAN") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
-			apagar_ventilador();
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"CAL") && !strcmp(serial.datos,"ON") && sistema.flag.conexion_serial){
-			GPIO_SetBits(GPIOC,GPIO_Pin_4);
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"CAL") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
-			GPIO_ResetBits(GPIOC,GPIO_Pin_4);
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"BOMBA") && !strcmp(serial.datos,"ON") && sistema.flag.conexion_serial){
-			GPIO_SetBits(GPIOC,GPIO_Pin_5);
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"BOMBA") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
-			GPIO_ResetBits(GPIOC,GPIO_Pin_5);
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"VAR") && !strcmp(serial.datos,"TEMP") && sistema.flag.conexion_serial){
-			sprintf(msj,"VAR: %d,%d,%d\r\n",control.limite_delta_temp,control.max_temp_fan,control.min_temp_fan);
-			enviar_comando(msj);
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-
-		// Comando para modificar los valroes de temperaturas de las etapas.
-		if(!strcmp(serial.comando,"MOD_TEMP") && sistema.flag.conexion_serial){
-			serial_modificar_temp();
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"CK_TEMP") && sistema.flag.conexion_serial){
-			if(!strcmp(serial.datos,"TOM")){
-				sprintf(msj,"TEMP: %d,%d,%d\r\n",tomate[0].limite_delta_temp,tomate[0].max_temp_calentador,tomate[0].max_temp_fan);
-				enviar_comando(msj);
-			}
-			else if(!strcmp(serial.datos,"ZAN")){
-				sprintf(msj,"TEMP: %d,%d,%d\r\n",zanahoria[0].limite_delta_temp,zanahoria[0].max_temp_calentador,zanahoria[0].max_temp_fan);
-				enviar_comando(msj);
-			}
-
-			enviar_comando(":OKK,-,-!\r\n");
-		}
 
 
-		// Comado SDC SD card Coneccted, se chequea si se puede montar la tarjeta.
-		if(!strcmp(serial.comando,"SDC") && sistema.flag.conexion_serial){
-			enviar_comando(":OKK,-,-! ");
-			if(UB_Fatfs_Mount(MMC_0)==FATFS_OK){
-				enviar_comando(":SDC,8,Presente!\r\n");
-				UB_Fatfs_UnMount(MMC_0);
-			}
-			else{
-				enviar_comando(":SDC,8,Ausente!\r\n");
-			}
-
-		}
-		if(!strcmp(serial.comando,"MON") && !strcmp(serial.datos,"ON") && sistema.flag.conexion_serial){
-			sistema.flag.modo_monitor_serial = 1;
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-		if(!strcmp(serial.comando,"MON") && !strcmp(serial.datos,"OFF") && sistema.flag.conexion_serial){
-			sistema.flag.modo_monitor_serial = 0;
-			enviar_comando(":OKK,-,-!\r\n");
-		}
-	}
-	serial.flag.fin_paquete = 0;
-
-	if(sistema.flag.modo_monitor_serial && serial.flag.mostrar_valores){ // Si se esta en modo monitor se muestra el valor cada vez q se
-		TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-		sprintf(msj,"%d:%d:%d",datatime.hours,datatime.minutes,datatime.seconds);
-		enviar_comando(msj);
-		enviar_comando(" DHTI: ");										//	vence el contador.
-		enviar_comando(dht_interior.temperatura_string);
-		enviar_comando(" DHTE: ");										//	vence el contador.
-		enviar_comando(dht_exterior.temperatura_string);
-		sprintf(msj," ERR-I: %d ERR-E %d", dht_interior.estado,dht_exterior.estado);
-		enviar_comando(msj);
-		sprintf(msj," LDR: %d", ldr.adc_cuentas);
-		enviar_comando(msj);
-		sprintf(msj," YL-69: %d, %d %%\r\n", yl.adc_cuentas,yl.humedad);
-		enviar_comando(msj);
-		serial.flag.mostrar_valores = 0;
-	}
+void activar_alarma(void){
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+	/* Set alarm B each 20th day in a month */
+	/* Alarm will be first triggered 10 seconds later as time is configured for RTC */
+	AlarmTime.hours = datatime.hours;
+	AlarmTime.minutes = datatime.minutes+1;
+	AlarmTime.seconds = datatime.seconds;
+	AlarmTime.day = datatime.day;
+	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
+	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
 }
+
+// Handler de interrupciones.
 
 void USART3_IRQHandler(void) {
 	/*	Handler USART3_IRQHandler

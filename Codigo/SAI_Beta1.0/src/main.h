@@ -29,6 +29,13 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 #define NUMERO_ETAPAS 3
+#define MIN_T_ETAPA_0 1
+#define MIN_T_ETAPA_1 1
+#define MIN_T_ETAPA_2 1
+#define MIN_Z_ETAPA_0 2
+#define MIN_Z_ETAPA_1 2
+#define MIN_Z_ETAPA_2 3
+#define VOLT_REF	2950 //Voltaje maximo de tension (3V)
 
 #include <stm32f4xx.h>
 #include <stdio.h>
@@ -45,11 +52,16 @@
 
 struct{
 	uint8_t contador_menu;
-	uint8_t contador_menu2;
+	uint8_t contador_down;
+	uint8_t contador_back;
+	uint8_t contador_up;
+	uint8_t contador_enter;
 	struct {
 		unsigned int fin_menu : 1;
 		unsigned int fin_back : 1;
 		unsigned int fin_up : 1;
+		unsigned int fin_down : 1;
+		unsigned int fin_enter : 1;
 	}flag;
 }botones;
 
@@ -60,16 +72,8 @@ struct{
 	struct {
 		unsigned int fin_contador : 1;
 		unsigned int otra : 1;
-		unsigned int wacho : 1;
 	}flag;
 }led;
-
-//extern struct{
-//	uint32_t contador;
-//	uint8_t flag;
-//	uint8_t estado;
-//	uint32_t refresh_time;
-//}display;
 
 struct{
 	uint16_t contador;
@@ -79,7 +83,6 @@ struct{
 	struct {
 		unsigned int fin_contador : 1;
 		unsigned int fin_promedio : 1;
-		unsigned int wacho : 1;
 	}flag;
 }ldr;
 
@@ -106,6 +109,7 @@ struct{
 			unsigned int calentador_encendido : 1;
 			unsigned int fan_encendido : 1;
 			unsigned int ventana_abierta : 1;
+			unsigned int agua_tanque : 1;
 		}flag;
 }control;
 
@@ -227,10 +231,12 @@ temperaturas tomate[3] = {
 
 humedad tomate_h[3] = {
 	//{minima humedad,maxima humedad}
-		{60,70},
 		{30,70},
-		{60,70}
+		{40,50},
+		{80,90}
 };
+
+uint8_t tomate_minutos[3] = {1,2,3};
 
 temperaturas zanahoria[3] = {
 	//{limite_delta_temp,max_temp_fan,min_temp_fan,min_temp_calentador,max_temp_calentador}
@@ -252,6 +258,8 @@ temperaturas custom[3] = {
 	{6,7,8,9,10},
 	{11,12,13,14,15}
 };
+
+uint8_t zanahoria_minutos[3] = {2,4,6};
 
 // Prototipos de funciones.
 void inicializar_leds(void);
@@ -283,11 +291,15 @@ void backup_etapas(void);
 void log_etapas(void);
 void datalogger_mejorado(void);
 void serial_modificar_temp(void);
-
 void configurar_horario_etapa(uint8_t n_etapa,uint8_t minutos);
 void inicializar_botones(void);
 void serial_modificar_fecha(void);
+void serial_modificar_minutos_t(void);
+void serial_modificar_minutos_z(void);
 void control_hum_task(void);
-
+void leer_log(void);
+void leer_etapas(void);
+void menu_task(void);
+void inicializar_nivel_agua(void);
 
 #endif /* MAIN_H_ */
