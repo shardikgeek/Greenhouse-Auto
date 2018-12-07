@@ -77,20 +77,6 @@ struct{
 
 struct{
 	uint16_t contador;
-	struct {
-		unsigned int fin_contador : 1;
-	}flag;
-}dac;
-
-//extern struct{
-//	uint32_t contador;
-//	uint8_t flag;
-//	uint8_t estado;
-//	uint32_t refresh_time;
-//}display;
-
-struct{
-	uint16_t contador;
 	uint16_t contador_promedio;
 	uint16_t adc_cuentas;
 	uint16_t adc_cuentas_temp;
@@ -305,7 +291,6 @@ void backup_etapas(void);
 void log_etapas(void);
 void datalogger_mejorado(void);
 void serial_modificar_temp(void);
-
 void configurar_horario_etapa(uint8_t n_etapa,uint8_t minutos);
 void inicializar_botones(void);
 void serial_modificar_fecha(void);
@@ -316,6 +301,5 @@ void leer_log(void);
 void leer_etapas(void);
 void menu_task(void);
 void inicializar_nivel_agua(void);
-void inicializar_dac(void);
 
 #endif /* MAIN_H_ */

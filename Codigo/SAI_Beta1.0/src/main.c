@@ -20,7 +20,6 @@ int main(void){
 	inicializar_bomba();
 	inicializar_nivel_agua();
 	adc_inicializar();
-	inicializar_dac();
 	TIM5_Start(); // Inicializa el timer del DHT.
 	TIM3_Start(); // Inicializa el timer para el motor paso a paso.
 	USART3_Config();
@@ -65,6 +64,9 @@ int main(void){
 	}
 }
 
+
+/// INICIALIZAIONES
+
 void inicializar_botones(){
 	//
 	//Inicializacion de los botones.
@@ -81,40 +83,6 @@ void inicializar_botones(){
 	GPIO_Init_Pins.GPIO_PuPd = GPIO_PuPd_UP;
 
 	GPIO_Init(GPIOD, &GPIO_Init_Pins);// Carga de la estrucura de datos.
-}
-
-void inicializar_dac(){
-	DAC_InitTypeDef DAC_InitStructure;    //Configuracion del DAC
-	GPIO_InitTypeDef GPIO_InitStructure;  //Configuracion de los pines I/O.
-	//******* Configuracion de los pines ****************
-	// Habilitacion del clock
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-
-	// Configuracion del pin 4 - PORT A como salida Analogica
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, ENABLE);	//Habilitacion del clock
-
-	//DAC configuracion canal 1
-	DAC_InitStructure.DAC_Trigger=DAC_Trigger_None;
-	DAC_InitStructure.DAC_WaveGeneration=DAC_WaveGeneration_None;
-	DAC_InitStructure.DAC_OutputBuffer=DAC_OutputBuffer_Enable;
-	DAC_Init(DAC_Channel_1, &DAC_InitStructure);
-	DAC_Cmd(DAC_Channel_1, ENABLE); //Habilitacion del DAC
-}
-
-void generar_milivolts(int32_t valor)
-{
-	/*
-	 * Convierte el valor que devuelve el DAC a mV.
-	 */
-
-	uint16_t data;
-	data = (valor * 4095)/VOLT_REF; //Referencia el valor generado por el DAC a un valor de tension
-	DAC_SetChannel1Data(DAC_Align_12b_R,data);
 }
 
 void inicializar_nivel_agua(){
@@ -136,6 +104,175 @@ void inicializar_nivel_agua(){
 }
 
 
+
+
+void inicializar_leds(){
+	/*	Funcion inicializar_leds()
+	 *	No recive ni devuelve un valor.
+	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
+	 */
+
+	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
+
+	//
+	//Inicializacion de los leds.
+	//
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+
+	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_15 |GPIO_Pin_12 | GPIO_Pin_13;
+	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
+	GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
+	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
+	GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
+
+	GPIO_Init(GPIOD,&GPIO_Init_Pins); // Carga de la estrucura de datos.
+
+}
+
+void inicializar_fan(){
+	/*	Funcion inicializar_leds()
+	 *	No recive ni devuelve un valor.
+	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
+	 */
+
+	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
+
+	//
+	//Inicializacion de los leds.
+	//
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+
+	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_14;
+	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
+	GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
+	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
+	GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
+
+	GPIO_Init(GPIOD,&GPIO_Init_Pins); // Carga de la estrucura de datos.
+
+}
+
+void inicializar_ventana()
+{
+	GPIO_InitTypeDef GPIOA_Stepper;
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+
+	GPIOA_Stepper.GPIO_Mode = GPIO_Mode_OUT;
+	GPIOA_Stepper.GPIO_OType = GPIO_OType_PP;
+	GPIOA_Stepper.GPIO_Pin = GPIO_Pin_10|GPIO_Pin_13|GPIO_Pin_14|GPIO_Pin_15;
+	GPIOA_Stepper.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIOA_Stepper.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA,&GPIOA_Stepper);
+}
+
+void inicializar_calentador(){
+	/*	Funcion inicializar_leds()
+	 *	No recive ni devuelve un valor.
+	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
+	 */
+
+	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
+
+	//
+	//Inicializacion de los leds.
+	//
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+
+	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_4;
+	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
+	GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
+	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
+	GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
+
+	GPIO_Init(GPIOC,&GPIO_Init_Pins); // Carga de la estrucura de datos.
+
+}
+
+void inicializar_bomba(){
+	/*	Funcion inicializar_leds()
+	 *	No recive ni devuelve un valor.
+	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
+	 */
+
+	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
+
+	//
+	//Inicializacion de los leds.
+	//
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+
+	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_5;
+	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
+	GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
+	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
+	GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
+
+	GPIO_Init(GPIOC,&GPIO_Init_Pins); // Carga de la estrucura de datos.
+
+}
+
+
+static void USART3_Config(void)
+{
+	/*	Funcion USART3_Config
+	 * 	Configura los pines necesarios para la conexion a traves de RS232.
+	 * 	Ademas inicializa las interrupciones para el USART3 en modo recepcion.
+	 */
+	GPIO_InitTypeDef GPIO_InitStructure;
+	USART_InitTypeDef USART_InitStructure;
+	/* USART IOs configuration ***********************************/
+	/* Enable GPIOC clock */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+	/* Connect PC10 to USART3_Tx */
+	GPIO_PinAFConfig(GPIOD, GPIO_PinSource8, GPIO_AF_USART3);
+	/* Connect PC11 to USART3_Rx*/
+	GPIO_PinAFConfig(GPIOD, GPIO_PinSource9, GPIO_AF_USART3);
+	/* Configure USART3_Tx and USART3_Rx as alternate function */
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz; // estaba en 50MHz
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
+	/* USART configuration ***************************************/
+	/* USART3 configured as follow:
+- BaudRate = 115200 baud
+- Word Length = 8 Bits
+- One Stop Bit
+- No parity
+- Hardware flow control disabled (RTS and CTS signals)
+- Receive and transmit enabled
+	 */
+	/* Enable USART3 clock */
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+	USART_InitStructure.USART_BaudRate = 9600;
+	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;
+	USART_InitStructure.USART_Parity = USART_Parity_No;
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+	USART_Init(USART3, &USART_InitStructure);
+	/* Enable USART3 */
+	USART_Cmd(USART3, ENABLE);
+
+	//USART1 is more important than USART2, so it has lower sub priority number
+	NVIC_InitTypeDef NVIC_InitStruct;
+
+	NVIC_InitStruct.NVIC_IRQChannel = USART3_IRQn;
+	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 10;
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+	NVIC_Init(&NVIC_InitStruct);
+
+	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE); // Se habilitan las interrupciones cuando se recibe un dato.
+}
+///
+
+///	Tareas
 
 void task_scheduler(void){
 	/*	Funcion task_scheduler()
@@ -232,13 +369,10 @@ void task_scheduler(void){
 		}
 
 		if((botones.contador_menu + botones.contador_down + botones.contador_up + botones.contador_back + botones.contador_enter) >= 30){
-			GPIO_SetBits(GPIOD,GPIO_Pin_12);
-			//DAC_Cmd(DAC_Channel_1, ENABLE); //Habilitacion del DAC
-			generar_milivolts(1500);
+			GPIO_SetBits(GPIOD,GPIO_Pin_12); // Se enciende el led verde si se apretan los botones a la vez.
 		}
 		else{
-			GPIO_ResetBits(GPIOD,GPIO_Pin_12);
-			//DAC_Cmd(DAC_Channel_1, DISABLE); //Habilitacion del DAC
+			GPIO_ResetBits(GPIOD,GPIO_Pin_12); // Se apaga el led si no se presiona el led o se apreta de a uno a la vez.
 
 		}
 
@@ -355,115 +489,6 @@ void task_scheduler(void){
 		cultivo.flag.fin_contador = 1;
 		cultivo.contador_aux = 10e3 + 1;
 	}
-}
-
-void inicializar_leds(){
-	/*	Funcion inicializar_leds()
-	 *	No recive ni devuelve un valor.
-	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
-	 */
-
-	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
-
-	//
-	//Inicializacion de los leds.
-	//
-
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
-
-	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_15 |GPIO_Pin_12 | GPIO_Pin_13;
-	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
-	GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
-	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
-	GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
-
-	GPIO_Init(GPIOD,&GPIO_Init_Pins); // Carga de la estrucura de datos.
-
-}
-
-void inicializar_fan(){
-	/*	Funcion inicializar_leds()
-	 *	No recive ni devuelve un valor.
-	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
-	 */
-
-	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
-
-	//
-	//Inicializacion de los leds.
-	//
-
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
-
-	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_14;
-	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
-	GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
-	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
-	GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
-
-	GPIO_Init(GPIOD,&GPIO_Init_Pins); // Carga de la estrucura de datos.
-
-}
-
-void inicializar_ventana()
-{
-	GPIO_InitTypeDef GPIOA_Stepper;
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-
-	GPIOA_Stepper.GPIO_Mode = GPIO_Mode_OUT;
-	GPIOA_Stepper.GPIO_OType = GPIO_OType_PP;
-	GPIOA_Stepper.GPIO_Pin = GPIO_Pin_10|GPIO_Pin_13|GPIO_Pin_14|GPIO_Pin_15;
-	GPIOA_Stepper.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIOA_Stepper.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOA,&GPIOA_Stepper);
-}
-
-void inicializar_calentador(){
-	/*	Funcion inicializar_leds()
-	 *	No recive ni devuelve un valor.
-	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
-	 */
-
-	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
-
-	//
-	//Inicializacion de los leds.
-	//
-
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-
-	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_4;
-	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
-	GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
-	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
-	GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
-
-	GPIO_Init(GPIOC,&GPIO_Init_Pins); // Carga de la estrucura de datos.
-
-}
-
-void inicializar_bomba(){
-	/*	Funcion inicializar_leds()
-	 *	No recive ni devuelve un valor.
-	 *	Se inicializan los 4 leds de la placa Discovery STM32F4.
-	 */
-
-	GPIO_InitTypeDef GPIO_Init_Pins; // Estrucura de datos para configurar el GPIO
-
-	//
-	//Inicializacion de los leds.
-	//
-
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-
-	GPIO_Init_Pins.GPIO_Pin= GPIO_Pin_5;
-	GPIO_Init_Pins.GPIO_Mode=GPIO_Mode_OUT ;
-	GPIO_Init_Pins.GPIO_Speed= GPIO_Speed_100MHz;
-	GPIO_Init_Pins.GPIO_OType= GPIO_OType_PP ;
-	GPIO_Init_Pins.GPIO_PuPd= GPIO_PuPd_NOPULL;
-
-	GPIO_Init(GPIOC,&GPIO_Init_Pins); // Carga de la estrucura de datos.
-
 }
 
 void task_manager(void){
@@ -1013,824 +1038,6 @@ void control_hum_task(void){
 }
 
 
-
-void cargar_datos(){
-	/*	Funcion cargar_datos()
-	 * 	Esta funcion carga los datos por defecto al sistema de control.
-	 * 	De momento los valores se toman de unos arreglos ya predefinidos, la idea es que sean leidos por memoria externa.
-	 */
-	FIL myFile;   // Filehandler
-	char temp_string[250];
-	//char string[6] = "Hola";
-	char *temp;
-	uint8_t estado_cultivo = -1;
-	uint8_t etapa_actual = -1;
-	uint8_t tipo_cultivo = -1;
-	uint8_t etapa_temp = 0;
-	TM_RTC_t backup[3];
-	uint32_t cant_bytes_archivo = 0;
-
-	// se lee el archivo LOG de la sd.
-	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
-		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
-		// Media mounten
-		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
-			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
-			// File zum schreiben im root neu anlegen
-			if(UB_Fatfs_OpenFile(&myFile, "0:/LOG.txt", F_RD)==FATFS_OK) {
-				// ein paar Textzeilen in das File schreiben
-				cant_bytes_archivo = UB_Fatfs_FileSize(&myFile);
-				if(UB_Fatfs_ReadString(&myFile,temp_string,cant_bytes_archivo) == FATFS_OK){
-					tarjeta_sd.flag.fallo_abrir_archivo = 0;
-					//strcpy(tarjeta_sd.lectura,temp_string);
-
-					///////////////Codigo que interpreta el texto////////////
-					temp = strtok(temp_string," ,.-");
-
-					while(temp != NULL){
-						if(!strcmp("CULTIVO_ACTIVO",temp)){
-							temp = strtok(NULL," ,.-");
-							estado_cultivo = atoi(temp);
-						}
-						else if(!strcmp("ETAPA_CULTIVO",temp)){
-							temp = strtok(NULL," ,.-");
-							etapa_actual = atoi(temp);
-						}
-						else if(!strcmp("TIPO_CULTIVO",temp)){
-							temp = strtok(NULL," ,.-");
-							tipo_cultivo = atoi(temp);
-						}
-						temp = strtok(NULL," ,.-");
-
-					}
-					/////////////////////////////////////////////////////////
-				}
-				else{
-					tarjeta_sd.flag.fallo_abrir_archivo = 1;
-				}
-				// File schliessen
-				UB_Fatfs_CloseFile(&myFile);
-			}
-			// Media unmounten
-			UB_Fatfs_UnMount(MMC_0);
-		}
-	}
-
-
-	if(estado_cultivo != -1 && etapa_actual != -1 && tipo_cultivo != -1){ // Se comprueba que el archivo este correcto.
-
-		if(estado_cultivo == 1){ // Si el seguimiento estuvo activo se obtienen las fechas de las etapas.
-
-			// Se lee el archivo ETAPAS de la SD.
-			if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
-				//GPIO_SetBits(GPIOD,GPIO_Pin_13);
-				// Media mounten
-				if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
-					//GPIO_SetBits(GPIOD,GPIO_Pin_12);
-					// File zum schreiben im root neu anlegen
-					if(UB_Fatfs_OpenFile(&myFile, "0:/ETAPAS.txt", F_RD)==FATFS_OK) {
-						// ein paar Textzeilen in das File schreiben
-						cant_bytes_archivo = UB_Fatfs_FileSize(&myFile);
-						if(UB_Fatfs_ReadString(&myFile,temp_string,cant_bytes_archivo) == FATFS_OK){
-							tarjeta_sd.flag.fallo_abrir_archivo = 0;
-							//strcpy(tarjeta_sd.lectura,temp_string);
-
-							///////////////Codigo que interpreta el texto////////////
-							temp = strtok(temp_string," ,.-");
-
-							while(temp != NULL){
-								if(!strcmp("ETAPA",temp)){
-									temp = strtok(NULL," ,.-");
-									etapa_temp = atoi(temp);
-								}
-								else if(!strcmp("YEAR",temp)){
-									temp = strtok(NULL," ,.-");
-									backup[etapa_temp].year = atoi(temp);
-								}
-								else if(!strcmp("MONTH",temp)){
-									temp = strtok(NULL," ,.-");
-									backup[etapa_temp].month = atoi(temp);
-								}
-								else if(!strcmp("HOURS",temp)){
-									temp = strtok(NULL," ,.-");
-									backup[etapa_temp].hours = atoi(temp);
-								}
-								else if(!strcmp("MINUTES",temp)){
-									temp = strtok(NULL," ,.-");
-									backup[etapa_temp].minutes = atoi(temp);
-								}
-								else if(!strcmp("SECONDS",temp)){
-									temp = strtok(NULL," ,.-");
-									backup[etapa_temp].seconds = atoi(temp);
-								}
-								else if(!strcmp("DAY",temp)){
-									temp = strtok(NULL," ,.-");
-									backup[etapa_temp].date = atoi(temp);
-								}
-
-								temp = strtok(NULL," ,.-");
-
-							}
-							/////////////////////////////////////////////////////////
-						}
-						else{
-							tarjeta_sd.flag.fallo_abrir_archivo = 1;
-						}
-						// File schliessen
-						UB_Fatfs_CloseFile(&myFile);
-					}
-					// Media unmounten
-					UB_Fatfs_UnMount(MMC_0);
-				}
-			}
-
-			sprintf(mensaje_global,"Etapa %d, YEAR: %d, MONTH %d, HOURS %d, MINUTES %d, SECONDS %d, DAY %d.\r\n", 2,backup[2].year,backup[2].month,backup[2].hours,backup[2].minutes, backup[2].seconds, backup[2].date);
-			// Se lee el archivo ETAPAS
-			//			sprintf(mensaje_global,"Wacho");
-
-			// Se comprueba si la ultima fecha es valida (por lo tanto todas son validas)
-			if(fecha_valida(backup[2])){
-				// Se comprueba que la ultima etapa seteada este en una fecha valida, sino se activa la etapa siguiente y asi hasta
-				// llegar a una etapa valida.
-				//sprintf(mensaje_global,"Fecha valida.");
-
-				while(!fecha_valida(backup[etapa_actual]) && etapa_actual < 3){
-					etapa_actual+=1;
-				}
-
-				sprintf(mensaje_global,"La etapa seleccionada: %d.", etapa_actual);
-
-				// Se configura la etapa valida.
-
-				cultivo.etapa[0].year = backup[0].year;
-				cultivo.etapa[0].month = backup[0].month;
-				cultivo.etapa[0].hours = backup[0].hours;
-				cultivo.etapa[0].minutes = backup[0].minutes;
-				cultivo.etapa[0].seconds = backup[0].seconds;
-				cultivo.etapa[0].date = backup[0].date;
-
-				cultivo.etapa[1].year = backup[1].year;
-				cultivo.etapa[1].month = backup[1].month;
-				cultivo.etapa[1].hours = backup[1].hours;
-				cultivo.etapa[1].minutes = backup[1].minutes;
-				cultivo.etapa[1].seconds = backup[1].seconds;
-				cultivo.etapa[1].date = backup[1].date;
-
-				cultivo.etapa[2].year = backup[2].year;
-				cultivo.etapa[2].month = backup[2].month;
-				cultivo.etapa[2].hours = backup[2].hours;
-				cultivo.etapa[2].minutes = backup[2].minutes;
-				cultivo.etapa[2].seconds = backup[2].seconds;
-				cultivo.etapa[2].date = backup[2].date;
-
-				// Se cargan las variables del cultivo en el sistema.
-				cultivo.flag.control_activo = estado_cultivo;
-				cultivo.etapa_actual = etapa_actual;
-				cultivo.tipo = tipo_cultivo;
-
-				// Se setean las variables de control de a cuerdo a la etapa actual.
-				if(cultivo.tipo == 0){
-					control.limite_delta_temp = tomate[cultivo.etapa_actual].limite_delta_temp;
-					control.max_temp_fan = tomate[cultivo.etapa_actual].max_temp_fan;
-					control.min_temp_fan = tomate[cultivo.etapa_actual].min_temp_fan;
-					control.max_temp_calentador = tomate[cultivo.etapa_actual].max_temp_calentador;
-					control.min_temp_calentador = tomate[cultivo.etapa_actual].min_temp_calentador;
-					strcpy(cultivo.nombre,"Tomate");
-				}
-				else if(cultivo.tipo == 1){
-					control.limite_delta_temp = zanahoria[cultivo.etapa_actual].limite_delta_temp;
-					control.max_temp_fan = zanahoria[cultivo.etapa_actual].max_temp_fan;
-					control.min_temp_fan = zanahoria[cultivo.etapa_actual].min_temp_fan;
-					control.max_temp_calentador = zanahoria[cultivo.etapa_actual].max_temp_calentador;
-					control.min_temp_calentador = zanahoria[cultivo.etapa_actual].min_temp_calentador;
-					strcpy(cultivo.nombre,"Zanahoria");
-				}
-
-				AlarmTime.hours = cultivo.etapa[etapa_actual].hours;
-				AlarmTime.minutes = cultivo.etapa[etapa_actual].minutes;
-				AlarmTime.seconds = cultivo.etapa[etapa_actual].seconds;
-				AlarmTime.day = cultivo.etapa[etapa_actual].date;
-				AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
-				TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
-			}
-			else{
-				// Si la fecha no es valida se suspende el seguimiento.
-				sprintf(mensaje_global,"Fecha invalida.");
-				cultivo.flag.control_activo = 0;
-				cultivo.etapa_actual = 0;
-			}
-			// Se comprueba que la ultima etapa seteada este en una fecha valida, sino se activa la etapa siguiente y asi hasta
-			// llegar a una etapa valida.
-
-			// Se configura la etapa valida.
-		}
-		else{ // Si el seguimiento estuvo desactivado se modifican las banderas necesarias.
-			sprintf(mensaje_global,"FALLO");
-			cultivo.flag.control_activo = 0;
-			cultivo.etapa_actual = 0;
-		}
-
-	}
-}
-
-void leer_log(){
-	FIL myFile;   // Filehandler
-	char temp_string[250];
-	uint16_t cant_bytes_archivo = 0;
-	// se lee el archivo LOG de la sd.
-	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
-		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
-		// Media mounten
-		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
-			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
-			// File zum schreiben im root neu anlegen
-			if(UB_Fatfs_OpenFile(&myFile, "0:/LOG.txt", F_RD)==FATFS_OK) {
-				// ein paar Textzeilen in das File schreiben
-				cant_bytes_archivo = UB_Fatfs_FileSize(&myFile);
-				if(UB_Fatfs_ReadString(&myFile,temp_string,cant_bytes_archivo) == FATFS_OK){
-					tarjeta_sd.flag.fallo_abrir_archivo = 0;
-					enviar_comando(temp_string);
-
-				}
-				else{
-					tarjeta_sd.flag.fallo_abrir_archivo = 1;
-				}
-				// File schliessen
-				UB_Fatfs_CloseFile(&myFile);
-			}
-			// Media unmounten
-			UB_Fatfs_UnMount(MMC_0);
-		}
-	}
-}
-
-void leer_etapas(){
-	FIL myFile;   // Filehandler
-	char temp_string[250];
-	uint16_t cant_bytes_archivo = 0;
-	// se lee el archivo LOG de la sd.
-	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
-		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
-		// Media mounten
-		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
-			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
-			// File zum schreiben im root neu anlegen
-			if(UB_Fatfs_OpenFile(&myFile, "0:/ETAPAS.txt", F_RD)==FATFS_OK) {
-				// ein paar Textzeilen in das File schreiben
-				cant_bytes_archivo = UB_Fatfs_FileSize(&myFile);
-				if(UB_Fatfs_ReadString(&myFile,temp_string,cant_bytes_archivo) == FATFS_OK){
-					tarjeta_sd.flag.fallo_abrir_archivo = 0;
-					enviar_comando(temp_string);
-				}
-				else{
-					tarjeta_sd.flag.fallo_abrir_archivo = 1;
-				}
-				// File schliessen
-				UB_Fatfs_CloseFile(&myFile);
-			}
-			// Media unmounten
-			UB_Fatfs_UnMount(MMC_0);
-		}
-	}
-}
-// cual?
-
-//configurar_cultivo_tomate();
-
-void serial_modificar_temp(){
-	//char temp_string[250];
-	char *temp;
-	uint8_t etapa = 0;
-	uint8_t tipo = 0;
-	///////////////Codigo que interpreta el texto////////////
-	temp = strtok(serial.datos," ,.-");
-
-	while(temp != NULL){
-		if(!strcmp("ETAPA",temp)){
-			temp = strtok(NULL," ,.-");
-			etapa = atoi(temp);
-		}
-		else if(!strcmp("TIPO",temp)){
-			temp = strtok(NULL," ,.-");
-			tipo = atoi(temp);
-		}
-		else if(!strcmp("MAX_FAN",temp)){
-			temp = strtok(NULL," ,.-");
-			if(tipo == 0)
-				tomate[etapa].max_temp_fan = atoi(temp);
-			else if(tipo == 1)
-				zanahoria[etapa].max_temp_fan = atoi(temp);
-		}
-		else if(!strcmp("MIN_FAN",temp)){
-			temp = strtok(NULL," ,.-");
-			if(tipo == 0)
-				tomate[etapa].min_temp_fan = atoi(temp);
-			else if(tipo == 1)
-				zanahoria[etapa].min_temp_fan = atoi(temp);
-		}
-		else if(!strcmp("MIN_CAL",temp)){
-			temp = strtok(NULL," ,.-");
-			if(tipo == 0)
-				tomate[etapa].min_temp_calentador = atoi(temp);
-			else if(tipo == 1)
-				zanahoria[etapa].min_temp_calentador = atoi(temp);
-		}
-		else if(!strcmp("MAX_CAL",temp)){
-			temp = strtok(NULL," ,.-");
-			if(tipo == 0)
-				tomate[etapa].max_temp_calentador = atoi(temp);
-			else if(tipo == 1)
-				zanahoria[etapa].max_temp_calentador = atoi(temp);
-		}
-		temp = strtok(NULL," ,.-");
-
-	}
-	/////////////////////////////////////////////////////////
-}
-
-void serial_modificar_fecha(){
-	//char temp_string[250];
-	char *temp;
-	///////////////Codigo que interpreta el texto////////////
-	temp = strtok(serial.datos," ,.-");
-
-	while(temp != NULL){
-		if(!strcmp("YEAR",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.year = atoi(temp);
-		}
-		else if(!strcmp("MON",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.month = atoi(temp);
-		}
-		else if(!strcmp("DATE",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.date = atoi(temp);
-		}
-		else if(!strcmp("DAY",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.day = atoi(temp);
-		}
-		else if(!strcmp("HOUR",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.hours = atoi(temp);
-		}
-		else if(!strcmp("MIN",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.minutes = atoi(temp);
-		}
-		else if(!strcmp("SEC",temp)){
-			temp = strtok(NULL," ,.-");
-			datatime.seconds = atoi(temp);
-		}
-		temp = strtok(NULL," ,.-");
-
-	}
-	/////////////////////////////////////////////////////////
-}
-
-void serial_modificar_minutos_t(){
-	char *temp;
-	///////////////Codigo que interpreta el texto////////////
-	temp = strtok(serial.datos," ,.-");
-
-	while(temp != NULL){
-		if(!strcmp("E0",temp)){
-			temp = strtok(NULL," ,.-");
-			tomate_minutos[0] = atoi(temp);
-		}
-		else if(!strcmp("E1",temp)){
-			temp = strtok(NULL," ,.-");
-			tomate_minutos[1] = atoi(temp);
-		}
-		else if(!strcmp("E2",temp)){
-			temp = strtok(NULL," ,.-");
-			tomate_minutos[2] = atoi(temp);
-		}
-		temp = strtok(NULL," ,.-");
-
-	}
-	/////////////////////////////////////////////////////////
-}
-
-void serial_modificar_minutos_z(){
-	char *temp;
-	///////////////Codigo que interpreta el texto////////////
-	temp = strtok(serial.datos," ,.-");
-
-	while(temp != NULL){
-		if(!strcmp("E0",temp)){
-			temp = strtok(NULL," ,.-");
-			zanahoria_minutos[0] = atoi(temp);
-		}
-		else if(!strcmp("E1",temp)){
-			temp = strtok(NULL," ,.-");
-			zanahoria_minutos[1] = atoi(temp);
-		}
-		else if(!strcmp("E2",temp)){
-			temp = strtok(NULL," ,.-");
-			zanahoria_minutos[2] = atoi(temp);
-		}
-		temp = strtok(NULL," ,.-");
-
-	}
-	/////////////////////////////////////////////////////////
-}
-
-int fecha_valida(TM_RTC_t fecha_control){
-	/*	Funcion fecha_valida()
-	 * 	Funcion encargada de retornar si la fecha ingresada en una etapa es valida o no.
-	 * 	Si la fecha se encuentra en el pasado es rechazada, si es del futuro se acepta.
-	 */
-
-	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-
-	if(fecha_control.year < datatime.year){
-		return 0;
-	}
-	else if(fecha_control.month < datatime.month){
-		return 0;
-	}
-	else if(fecha_control.date < datatime.date){
-		return 0;
-	}
-	else if(fecha_control.hours < datatime.hours){
-		return 0;
-	}
-	else if(fecha_control.minutes < datatime.minutes){
-		return 0;
-	}
-	else
-		return 1;
-}
-
-void configurar_cultivo_tomate(void){
-	/*	Funcion configurar_cultivo_tomate()
-	 * 	Funcion que inicializa los valores de control de cultivo.
-	 *	Se configuran las fechas de las etapas y las variables objetivo para cada una de ellas.
-	 *	Ademas se comprueba que las fechas ingresadas sean correctas, si todas lo son se activa el seguimiento.
-	 */
-
-	//	uint8_t i,n_etapas_validas = 0;
-	//	char msj[30] = "";
-
-	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-
-	//
-	//Se fijan las alarmas y luego se las guarda en la tarjeta SD como backup.
-	//
-
-	// configurar_horario_etapa(n_etapa,minutos)
-	cultivo.etapa[0].year = datatime.year;
-	cultivo.etapa[0].month = datatime.month;
-	cultivo.etapa[0].hours = datatime.hours;
-	cultivo.etapa[0].minutes = datatime.minutes + MIN_T_ETAPA_0;
-	cultivo.etapa[0].seconds = datatime.seconds;
-	cultivo.etapa[0].date = datatime.date;
-	// Se asegura que la fecha sea valida.
-	//	if((datatime.day + 7) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
-	//		cultivo.etapa[0].day = 7 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
-	//	}
-	//	else
-	//		cultivo.etapa[0].day = datatime.day + 7;
-
-	cultivo.etapa[1].year = datatime.year;
-	cultivo.etapa[1].month = datatime.month;
-	cultivo.etapa[1].hours = datatime.hours;
-	cultivo.etapa[1].minutes = datatime.minutes + MIN_T_ETAPA_0 + MIN_T_ETAPA_1;
-	cultivo.etapa[1].seconds = datatime.seconds;
-	// Se asegura que la fecha sea valida.
-	//	if((datatime.day + 14) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
-	//		cultivo.etapa[1].day = 14 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
-	//	}
-	//	else
-	//		cultivo.etapa[1].day = datatime.day + 14;
-	cultivo.etapa[1].date = datatime.date;
-
-	cultivo.etapa[2].year = datatime.year;
-	cultivo.etapa[2].month = datatime.month;
-	cultivo.etapa[2].hours = datatime.hours;
-	cultivo.etapa[2].minutes = datatime.minutes + MIN_T_ETAPA_0 + MIN_T_ETAPA_1 + MIN_T_ETAPA_2;
-	cultivo.etapa[2].seconds = datatime.seconds;
-	cultivo.etapa[2].date = datatime.date;
-	// Se asegura que la fecha sea valida.
-	//	if((datatime.day + 21) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
-	//		cultivo.etapa[2].day = 21 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
-	//	}
-	//	else
-	//		cultivo.etapa[2].day = datatime.day + 21;
-
-	//
-	//  Se guardan los valores de las etapas en la SD
-	//
-	enviar_comando("C\r\n");
-	backup_etapas(); // Se guardan los valoers de las etapas en la SD.
-	enviar_comando("F\r\n");
-
-	//
-	//  Se cofigura la primer alarma.
-	//
-	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-	cultivo.etapa_actual = 0;
-	AlarmTime.hours = cultivo.etapa[0].hours;
-	AlarmTime.minutes = cultivo.etapa[0].minutes;
-	AlarmTime.seconds = cultivo.etapa[0].seconds;
-	AlarmTime.day = cultivo.etapa[0].date;
-	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
-	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
-
-	// Se setean las variables de control de a cuerdo a la etapa actual.
-	control.limite_delta_temp = tomate[cultivo.etapa_actual].limite_delta_temp;
-	control.max_temp_fan = tomate[cultivo.etapa_actual].max_temp_fan;
-	control.min_temp_fan = tomate[cultivo.etapa_actual].min_temp_fan;
-	control.max_temp_calentador = tomate[cultivo.etapa_actual].max_temp_calentador;
-	control.min_temp_calentador = tomate[cultivo.etapa_actual].min_temp_calentador;
-	control.max_hum = tomate_h[cultivo.etapa_actual].max_hum;
-	control.min_hum = tomate_h[cultivo.etapa_actual].min_hum;
-
-	strcpy(cultivo.nombre,"Tomate"); // Se guarda el nombre del cultivo.
-	cultivo.tipo = 0; // Se guarda el tipo de cultivo TOMATE = 0.
-
-	// Se habilitan las banderas de control.
-	cultivo.flag.control_activo = 1;
-	cultivo.flag.cambio_etapa = 1;
-	sistema.flag.first_dat_temp_int = 1;
-}
-
-void configurar_cultivo_zanahoria(void){
-	/*	Funcion configurar_cultivo_tomate()
-	 * 	Funcion que inicializa los valores de control de cultivo.
-	 *	Se configuran las fechas de las etapas y las variables objetivo para cada una de ellas.
-	 *	Ademas se comprueba que las fechas ingresadas sean correctas, si todas lo son se activa el seguimiento.
-	 */
-
-	//	uint8_t i,n_etapas_validas = 0;
-	//	char msj[30] = "";
-
-	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-
-	//
-	//Se fijan las alarmas y luego se las guarda en la tarjeta SD como backup.
-	//
-	cultivo.tipo = 1; // Se guarda el tipo de cultivo TOMATE = 0.
-	configurar_horario_etapa(0,tomate_minutos[0]);
-	configurar_horario_etapa(1,tomate_minutos[1]);
-	configurar_horario_etapa(2,tomate_minutos[2]);
-
-	//
-	//  Se guardan los valores de las etapas en la SD
-	//
-	enviar_comando("C\r\n");
-	backup_etapas(); // Se guardan los valoers de las etapas en la SD.
-	enviar_comando("F\r\n");
-
-	//
-	//  Se cofigura la primer alarma.
-	//
-	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-	cultivo.etapa_actual = 0;
-	AlarmTime.hours = cultivo.etapa[0].hours;
-	AlarmTime.minutes = cultivo.etapa[0].minutes;
-	AlarmTime.seconds = cultivo.etapa[0].seconds;
-	AlarmTime.day = cultivo.etapa[0].date;
-	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
-	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
-
-	// Se setean las variables de control de a cuerdo a la etapa actual.
-	control.limite_delta_temp = zanahoria[cultivo.etapa_actual].limite_delta_temp;
-	control.max_temp_fan = zanahoria[cultivo.etapa_actual].max_temp_fan;
-	control.min_temp_fan = zanahoria[cultivo.etapa_actual].min_temp_fan;
-	control.max_temp_calentador = zanahoria[cultivo.etapa_actual].max_temp_calentador;
-	control.min_temp_calentador = zanahoria[cultivo.etapa_actual].min_temp_calentador;
-	control.max_hum = zanahoria_h[cultivo.etapa_actual].max_hum;
-	control.min_hum = zanahoria_h[cultivo.etapa_actual].min_hum;
-
-	strcpy(cultivo.nombre,"Zanahoria"); // Se guarda el nombre del cultivo.
-	cultivo.tipo = 1; // Se guarda el tipo de cultivo TOMATE = 0.
-
-	// Se habilitan las banderas de control.
-	cultivo.flag.control_activo = 1;
-	cultivo.flag.cambio_etapa = 1;
-}
-
-void configurar_horario_etapa(uint8_t n_etapa,uint8_t valor){
-
-	/* Funcion configurar horario etapa
-	 * Recibe el numero de la etapa y la cantidad de dias que dura la etapa.
-	 * Configura la etapa q es especificada.
-	 */
-	 uint8_t horas_aux = 0;
-
-	 if(valor <= 60){
-		 if((datatime.minutes + valor)>59){
-				 cultivo.etapa[n_etapa].minutes = (datatime.minutes + valor) - 60;
-				 horas_aux++;
-			 }
-			 else{
-				 cultivo.etapa[n_etapa].minutes = (datatime.minutes + valor);
-			 }
-
-			cultivo.etapa[n_etapa].year = datatime.year;
-			cultivo.etapa[n_etapa].hours = datatime.hours + horas_aux;
-			cultivo.etapa[n_etapa].seconds = datatime.seconds;
-			cultivo.etapa[n_etapa].date = datatime.date;
-	 }
-	 else{
-		 cultivo.etapa[n_etapa].year = datatime.year;
-		 cultivo.etapa[n_etapa].hours = datatime.hours;
-		 cultivo.etapa[n_etapa].seconds = datatime.seconds;
-		 cultivo.etapa[n_etapa].minutes = (datatime.minutes + 1);
-		 cultivo.etapa[n_etapa].date = datatime.date;
-	 }
-
-
-}
-
-// Codigo para USART.
-void enviar_comando(char *cmd){
-	/*	Funcion enviar_comando
-	 * Envia una cadena a traves del USART3
-	 */
-	uint16_t n = strlen(cmd);
-	uint16_t i;
-	for(i=0;i<n;i++){
-		USART_SendData(USART3, cmd[i]); // Se envia el dato que ingreso.
-		while (USART_GetFlagStatus(USART3, USART_FLAG_TC) == RESET); // Se espera a que termine de enviar (NOTAR QUE DICE FLAG).
-	}
-}
-
-static void USART3_Config(void)
-{
-	/*	Funcion USART3_Config
-	 * 	Configura los pines necesarios para la conexion a traves de RS232.
-	 * 	Ademas inicializa las interrupciones para el USART3 en modo recepcion.
-	 */
-	GPIO_InitTypeDef GPIO_InitStructure;
-	USART_InitTypeDef USART_InitStructure;
-	/* USART IOs configuration ***********************************/
-	/* Enable GPIOC clock */
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
-	/* Connect PC10 to USART3_Tx */
-	GPIO_PinAFConfig(GPIOD, GPIO_PinSource8, GPIO_AF_USART3);
-	/* Connect PC11 to USART3_Rx*/
-	GPIO_PinAFConfig(GPIOD, GPIO_PinSource9, GPIO_AF_USART3);
-	/* Configure USART3_Tx and USART3_Rx as alternate function */
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz; // estaba en 50MHz
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	GPIO_Init(GPIOD, &GPIO_InitStructure);
-	/* USART configuration ***************************************/
-	/* USART3 configured as follow:
-- BaudRate = 115200 baud
-- Word Length = 8 Bits
-- One Stop Bit
-- No parity
-- Hardware flow control disabled (RTS and CTS signals)
-- Receive and transmit enabled
-	 */
-	/* Enable USART3 clock */
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
-	USART_InitStructure.USART_BaudRate = 9600;
-	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-	USART_InitStructure.USART_StopBits = USART_StopBits_1;
-	USART_InitStructure.USART_Parity = USART_Parity_No;
-	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
-	USART_Init(USART3, &USART_InitStructure);
-	/* Enable USART3 */
-	USART_Cmd(USART3, ENABLE);
-
-	//USART1 is more important than USART2, so it has lower sub priority number
-	NVIC_InitTypeDef NVIC_InitStruct;
-
-	NVIC_InitStruct.NVIC_IRQChannel = USART3_IRQn;
-	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 10;
-	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
-	NVIC_Init(&NVIC_InitStruct);
-
-	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE); // Se habilitan las interrupciones cuando se recibe un dato.
-}
-
-void activar_alarma(void){
-	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
-	/* Set alarm B each 20th day in a month */
-	/* Alarm will be first triggered 10 seconds later as time is configured for RTC */
-	AlarmTime.hours = datatime.hours;
-	AlarmTime.minutes = datatime.minutes+1;
-	AlarmTime.seconds = datatime.seconds;
-	AlarmTime.day = datatime.day;
-	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
-	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
-}
-
-void backup_etapas(void){
-	FIL myFile;   // Filehandler
-	char temp_string[3][100];
-
-	// Se guardan los horarios de las etapas.
-	sprintf(temp_string[0],"-,ETAPA 0, YEAR %d, MONTH %d, HOURS %d, MINUTES %d, SECONDS %d, DAY %d",
-			cultivo.etapa[0].year,cultivo.etapa[0].month,cultivo.etapa[0].hours,cultivo.etapa[0].minutes,cultivo.etapa[0].seconds, cultivo.etapa[0].date);
-	sprintf(temp_string[1],",ETAPA 1, YEAR %d, MONTH %d, HOURS %d, MINUTES %d, SECONDS %d, DAY %d",
-			cultivo.etapa[1].year,cultivo.etapa[1].month,cultivo.etapa[1].hours,cultivo.etapa[1].minutes,cultivo.etapa[1].seconds, cultivo.etapa[1].date);
-	sprintf(temp_string[2],",ETAPA 2, YEAR %d, MONTH %d, HOURS %d, MINUTES %d, SECONDS %d, DAY %d.",
-			cultivo.etapa[2].year,cultivo.etapa[2].month,cultivo.etapa[2].hours,cultivo.etapa[2].minutes,cultivo.etapa[2].seconds, cultivo.etapa[2].date);
-	//sprintf(temp_string,"%d", cultivo.etapa.hours[1]);
-
-	// Check ob Medium eingelegt ist
-	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
-		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
-		// Media mounten
-		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
-			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
-			// File zum schreiben im root neu anlegen
-			if(UB_Fatfs_OpenFile(&myFile, "0:/ETAPAS.txt", F_WR_CLEAR)==FATFS_OK) {
-				// ein paar Textzeilen in das File schreiben
-				UB_Fatfs_WriteString(&myFile,temp_string[0]);
-				UB_Fatfs_WriteString(&myFile,temp_string[1]);
-				UB_Fatfs_WriteString(&myFile,temp_string[2]);
-				// File schliessen
-				UB_Fatfs_CloseFile(&myFile);
-			}
-			// Media unmounten
-			UB_Fatfs_UnMount(MMC_0);
-		}
-	}else{
-	}
-
-}
-
-void log_etapas(void){
-	FIL myFile;   // Filehandler
-	char temp_string[70];
-	enviar_comando("ADENTRO\r\n");
-	sprintf(temp_string,"-,CULTIVO_ACTIVO %d, ETAPA_CULTIVO %d, TIPO_CULTIVO %d.",cultivo.flag.control_activo,cultivo.etapa_actual, cultivo.tipo);
-
-	// Check ob Medium eingelegt ist
-	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
-		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
-		// Media mounten
-		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
-			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
-			// File zum schreiben im root neu anlegen
-			if(UB_Fatfs_OpenFile(&myFile, "0:/Log.txt", F_WR_CLEAR)==FATFS_OK) {
-				// ein paar Textzeilen in das File schreiben
-				UB_Fatfs_WriteString(&myFile,temp_string);
-				// File schliessen
-				UB_Fatfs_CloseFile(&myFile);
-				enviar_comando("CHLOG\r\n");
-			}
-			else{
-				enviar_comando("FALLO\r\n");
-			}
-			// Media unmounten
-			UB_Fatfs_UnMount(MMC_0);
-		}
-	}else{
-
-	}
-}
-
-void datalogger_mejorado(void){
-	FIL myFile;   // Filehandler
-	char temp_string[16];
-	char temp_msj[100];
-	sprintf(temp_string,"0:/TI-%d%d.csv",datatime.date,datatime.hours);
-	sprintf(temp_msj,"%d:%d:%d;%s;%s;%d;%d\n",datatime.hours,datatime.minutes,datatime.seconds,dht_interior.temperatura_string,dht_exterior.temperatura_string,yl.humedad,ldr.adc_cuentas);
-
-	// Se chequea que el medio este
-	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
-		// Se monta el medio
-		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
-
-			// Si el archivo ya existe se adhiere la info.
-			if(UB_Fatfs_OpenFile(&myFile,temp_string, F_WR)==FATFS_OK) {
-				UB_Fatfs_WriteString(&myFile,temp_msj); // Se agrega el nuevo dato.
-				enviar_comando("Agregando...\r\n");
-
-				UB_Fatfs_CloseFile(&myFile); // Se cierra el archivo.
-			}
-			else{
-				// Si el archivo no existe se crea uno nuevo.
-				if(UB_Fatfs_OpenFile(&myFile,temp_string, F_WR_NEW)==FATFS_OK){
-					UB_Fatfs_WriteString(&myFile,"Hora;Temp Int;Temp Ext;Hum Suel;Luz\n"); // Se agregan los titulos de X e Y
-					UB_Fatfs_WriteString(&myFile,temp_msj); // Se agrega el nuevo dato.
-					enviar_comando("Creando...\r\n");
-					UB_Fatfs_CloseFile(&myFile);// Se cierra el archivo.
-				}
-				else{
-					enviar_comando("NOP\r\n");
-				}
-
-			}
-			// Media unmounten
-			UB_Fatfs_UnMount(MMC_0);
-		}
-	}
-}
-
 // Tarea de serial.
 void serial_task(void){
 	/*	Funcion serial_task()
@@ -2071,6 +1278,785 @@ void serial_task(void){
 		serial.flag.mostrar_valores = 0;
 	}
 }
+
+/// Funciones de la tarea serial.
+
+// Codigo para USART.
+void enviar_comando(char *cmd){
+	/*	Funcion enviar_comando
+	 * Envia una cadena a traves del USART3
+	 */
+	uint16_t n = strlen(cmd);
+	uint16_t i;
+	for(i=0;i<n;i++){
+		USART_SendData(USART3, cmd[i]); // Se envia el dato que ingreso.
+		while (USART_GetFlagStatus(USART3, USART_FLAG_TC) == RESET); // Se espera a que termine de enviar (NOTAR QUE DICE FLAG).
+	}
+}
+
+
+void serial_modificar_temp(){
+	//char temp_string[250];
+	char *temp;
+	uint8_t etapa = 0;
+	uint8_t tipo = 0;
+	///////////////Codigo que interpreta el texto////////////
+	temp = strtok(serial.datos," ,.-");
+
+	while(temp != NULL){
+		if(!strcmp("ETAPA",temp)){
+			temp = strtok(NULL," ,.-");
+			etapa = atoi(temp);
+		}
+		else if(!strcmp("TIPO",temp)){
+			temp = strtok(NULL," ,.-");
+			tipo = atoi(temp);
+		}
+		else if(!strcmp("MAX_FAN",temp)){
+			temp = strtok(NULL," ,.-");
+			if(tipo == 0)
+				tomate[etapa].max_temp_fan = atoi(temp);
+			else if(tipo == 1)
+				zanahoria[etapa].max_temp_fan = atoi(temp);
+		}
+		else if(!strcmp("MIN_FAN",temp)){
+			temp = strtok(NULL," ,.-");
+			if(tipo == 0)
+				tomate[etapa].min_temp_fan = atoi(temp);
+			else if(tipo == 1)
+				zanahoria[etapa].min_temp_fan = atoi(temp);
+		}
+		else if(!strcmp("MIN_CAL",temp)){
+			temp = strtok(NULL," ,.-");
+			if(tipo == 0)
+				tomate[etapa].min_temp_calentador = atoi(temp);
+			else if(tipo == 1)
+				zanahoria[etapa].min_temp_calentador = atoi(temp);
+		}
+		else if(!strcmp("MAX_CAL",temp)){
+			temp = strtok(NULL," ,.-");
+			if(tipo == 0)
+				tomate[etapa].max_temp_calentador = atoi(temp);
+			else if(tipo == 1)
+				zanahoria[etapa].max_temp_calentador = atoi(temp);
+		}
+		temp = strtok(NULL," ,.-");
+
+	}
+	/////////////////////////////////////////////////////////
+}
+
+void serial_modificar_fecha(){
+	//char temp_string[250];
+	char *temp;
+	///////////////Codigo que interpreta el texto////////////
+	temp = strtok(serial.datos," ,.-");
+
+	while(temp != NULL){
+		if(!strcmp("YEAR",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.year = atoi(temp);
+		}
+		else if(!strcmp("MON",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.month = atoi(temp);
+		}
+		else if(!strcmp("DATE",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.date = atoi(temp);
+		}
+		else if(!strcmp("DAY",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.day = atoi(temp);
+		}
+		else if(!strcmp("HOUR",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.hours = atoi(temp);
+		}
+		else if(!strcmp("MIN",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.minutes = atoi(temp);
+		}
+		else if(!strcmp("SEC",temp)){
+			temp = strtok(NULL," ,.-");
+			datatime.seconds = atoi(temp);
+		}
+		temp = strtok(NULL," ,.-");
+
+	}
+	/////////////////////////////////////////////////////////
+}
+
+void serial_modificar_minutos_t(){
+	char *temp;
+	///////////////Codigo que interpreta el texto////////////
+	temp = strtok(serial.datos," ,.-");
+
+	while(temp != NULL){
+		if(!strcmp("E0",temp)){
+			temp = strtok(NULL," ,.-");
+			tomate_minutos[0] = atoi(temp);
+		}
+		else if(!strcmp("E1",temp)){
+			temp = strtok(NULL," ,.-");
+			tomate_minutos[1] = atoi(temp);
+		}
+		else if(!strcmp("E2",temp)){
+			temp = strtok(NULL," ,.-");
+			tomate_minutos[2] = atoi(temp);
+		}
+		temp = strtok(NULL," ,.-");
+
+	}
+	/////////////////////////////////////////////////////////
+}
+
+void serial_modificar_minutos_z(){
+	char *temp;
+	///////////////Codigo que interpreta el texto////////////
+	temp = strtok(serial.datos," ,.-");
+
+	while(temp != NULL){
+		if(!strcmp("E0",temp)){
+			temp = strtok(NULL," ,.-");
+			zanahoria_minutos[0] = atoi(temp);
+		}
+		else if(!strcmp("E1",temp)){
+			temp = strtok(NULL," ,.-");
+			zanahoria_minutos[1] = atoi(temp);
+		}
+		else if(!strcmp("E2",temp)){
+			temp = strtok(NULL," ,.-");
+			zanahoria_minutos[2] = atoi(temp);
+		}
+		temp = strtok(NULL," ,.-");
+
+	}
+	/////////////////////////////////////////////////////////
+}
+
+void leer_log(){
+	FIL myFile;   // Filehandler
+	char temp_string[250];
+	uint16_t cant_bytes_archivo = 0;
+	// se lee el archivo LOG de la sd.
+	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+		// Media mounten
+		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+			// File zum schreiben im root neu anlegen
+			if(UB_Fatfs_OpenFile(&myFile, "0:/LOG.txt", F_RD)==FATFS_OK) {
+				// ein paar Textzeilen in das File schreiben
+				cant_bytes_archivo = UB_Fatfs_FileSize(&myFile);
+				if(UB_Fatfs_ReadString(&myFile,temp_string,cant_bytes_archivo) == FATFS_OK){
+					tarjeta_sd.flag.fallo_abrir_archivo = 0;
+					enviar_comando(temp_string);
+
+				}
+				else{
+					tarjeta_sd.flag.fallo_abrir_archivo = 1;
+				}
+				// File schliessen
+				UB_Fatfs_CloseFile(&myFile);
+			}
+			// Media unmounten
+			UB_Fatfs_UnMount(MMC_0);
+		}
+	}
+}
+
+void leer_etapas(){
+	FIL myFile;   // Filehandler
+	char temp_string[250];
+	uint16_t cant_bytes_archivo = 0;
+	// se lee el archivo LOG de la sd.
+	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+		// Media mounten
+		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+			// File zum schreiben im root neu anlegen
+			if(UB_Fatfs_OpenFile(&myFile, "0:/ETAPAS.txt", F_RD)==FATFS_OK) {
+				// ein paar Textzeilen in das File schreiben
+				cant_bytes_archivo = UB_Fatfs_FileSize(&myFile);
+				if(UB_Fatfs_ReadString(&myFile,temp_string,cant_bytes_archivo) == FATFS_OK){
+					tarjeta_sd.flag.fallo_abrir_archivo = 0;
+					enviar_comando(temp_string);
+				}
+				else{
+					tarjeta_sd.flag.fallo_abrir_archivo = 1;
+				}
+				// File schliessen
+				UB_Fatfs_CloseFile(&myFile);
+			}
+			// Media unmounten
+			UB_Fatfs_UnMount(MMC_0);
+		}
+	}
+}
+///
+
+///Funciones del control de cultivo.
+
+void configurar_cultivo_tomate(void){
+	/*	Funcion configurar_cultivo_tomate()
+	 * 	Funcion que inicializa los valores de control de cultivo.
+	 *	Se configuran las fechas de las etapas y las variables objetivo para cada una de ellas.
+	 *	Ademas se comprueba que las fechas ingresadas sean correctas, si todas lo son se activa el seguimiento.
+	 */
+
+	//	uint8_t i,n_etapas_validas = 0;
+	//	char msj[30] = "";
+
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+
+	//
+	//Se fijan las alarmas y luego se las guarda en la tarjeta SD como backup.
+	//
+
+	// configurar_horario_etapa(n_etapa,minutos)
+	cultivo.etapa[0].year = datatime.year;
+	cultivo.etapa[0].month = datatime.month;
+	cultivo.etapa[0].hours = datatime.hours;
+	cultivo.etapa[0].minutes = datatime.minutes + MIN_T_ETAPA_0;
+	cultivo.etapa[0].seconds = datatime.seconds;
+	cultivo.etapa[0].date = datatime.date;
+	// Se asegura que la fecha sea valida.
+	//	if((datatime.day + 7) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
+	//		cultivo.etapa[0].day = 7 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
+	//	}
+	//	else
+	//		cultivo.etapa[0].day = datatime.day + 7;
+
+	cultivo.etapa[1].year = datatime.year;
+	cultivo.etapa[1].month = datatime.month;
+	cultivo.etapa[1].hours = datatime.hours;
+	cultivo.etapa[1].minutes = datatime.minutes + MIN_T_ETAPA_0 + MIN_T_ETAPA_1;
+	cultivo.etapa[1].seconds = datatime.seconds;
+	// Se asegura que la fecha sea valida.
+	//	if((datatime.day + 14) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
+	//		cultivo.etapa[1].day = 14 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
+	//	}
+	//	else
+	//		cultivo.etapa[1].day = datatime.day + 14;
+	cultivo.etapa[1].date = datatime.date;
+
+	cultivo.etapa[2].year = datatime.year;
+	cultivo.etapa[2].month = datatime.month;
+	cultivo.etapa[2].hours = datatime.hours;
+	cultivo.etapa[2].minutes = datatime.minutes + MIN_T_ETAPA_0 + MIN_T_ETAPA_1 + MIN_T_ETAPA_2;
+	cultivo.etapa[2].seconds = datatime.seconds;
+	cultivo.etapa[2].date = datatime.date;
+	// Se asegura que la fecha sea valida.
+	//	if((datatime.day + 21) > TM_RTC_GetDaysInMonth(datatime.month,datatime.year) ){
+	//		cultivo.etapa[2].day = 21 - (TM_RTC_GetDaysInMonth(datatime.month,datatime.year) - datatime.day );
+	//	}
+	//	else
+	//		cultivo.etapa[2].day = datatime.day + 21;
+
+	//
+	//  Se guardan los valores de las etapas en la SD
+	//
+	enviar_comando("C\r\n");
+	backup_etapas(); // Se guardan los valoers de las etapas en la SD.
+	enviar_comando("F\r\n");
+
+	//
+	//  Se cofigura la primer alarma.
+	//
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+	cultivo.etapa_actual = 0;
+	AlarmTime.hours = cultivo.etapa[0].hours;
+	AlarmTime.minutes = cultivo.etapa[0].minutes;
+	AlarmTime.seconds = cultivo.etapa[0].seconds;
+	AlarmTime.day = cultivo.etapa[0].date;
+	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
+	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
+
+	// Se setean las variables de control de a cuerdo a la etapa actual.
+	control.limite_delta_temp = tomate[cultivo.etapa_actual].limite_delta_temp;
+	control.max_temp_fan = tomate[cultivo.etapa_actual].max_temp_fan;
+	control.min_temp_fan = tomate[cultivo.etapa_actual].min_temp_fan;
+	control.max_temp_calentador = tomate[cultivo.etapa_actual].max_temp_calentador;
+	control.min_temp_calentador = tomate[cultivo.etapa_actual].min_temp_calentador;
+	control.max_hum = tomate_h[cultivo.etapa_actual].max_hum;
+	control.min_hum = tomate_h[cultivo.etapa_actual].min_hum;
+
+	strcpy(cultivo.nombre,"Tomate"); // Se guarda el nombre del cultivo.
+	cultivo.tipo = 0; // Se guarda el tipo de cultivo TOMATE = 0.
+
+	// Se habilitan las banderas de control.
+	cultivo.flag.control_activo = 1;
+	cultivo.flag.cambio_etapa = 1;
+	sistema.flag.first_dat_temp_int = 1;
+}
+
+void configurar_cultivo_zanahoria(void){
+	/*	Funcion configurar_cultivo_tomate()
+	 * 	Funcion que inicializa los valores de control de cultivo.
+	 *	Se configuran las fechas de las etapas y las variables objetivo para cada una de ellas.
+	 *	Ademas se comprueba que las fechas ingresadas sean correctas, si todas lo son se activa el seguimiento.
+	 */
+
+	//	uint8_t i,n_etapas_validas = 0;
+	//	char msj[30] = "";
+
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+
+	//
+	//Se fijan las alarmas y luego se las guarda en la tarjeta SD como backup.
+	//
+	cultivo.tipo = 1; // Se guarda el tipo de cultivo TOMATE = 0.
+	configurar_horario_etapa(0,tomate_minutos[0]);
+	configurar_horario_etapa(1,tomate_minutos[1]);
+	configurar_horario_etapa(2,tomate_minutos[2]);
+
+	//
+	//  Se guardan los valores de las etapas en la SD
+	//
+	enviar_comando("C\r\n");
+	backup_etapas(); // Se guardan los valoers de las etapas en la SD.
+	enviar_comando("F\r\n");
+
+	//
+	//  Se cofigura la primer alarma.
+	//
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+	cultivo.etapa_actual = 0;
+	AlarmTime.hours = cultivo.etapa[0].hours;
+	AlarmTime.minutes = cultivo.etapa[0].minutes;
+	AlarmTime.seconds = cultivo.etapa[0].seconds;
+	AlarmTime.day = cultivo.etapa[0].date;
+	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
+	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
+
+	// Se setean las variables de control de a cuerdo a la etapa actual.
+	control.limite_delta_temp = zanahoria[cultivo.etapa_actual].limite_delta_temp;
+	control.max_temp_fan = zanahoria[cultivo.etapa_actual].max_temp_fan;
+	control.min_temp_fan = zanahoria[cultivo.etapa_actual].min_temp_fan;
+	control.max_temp_calentador = zanahoria[cultivo.etapa_actual].max_temp_calentador;
+	control.min_temp_calentador = zanahoria[cultivo.etapa_actual].min_temp_calentador;
+	control.max_hum = zanahoria_h[cultivo.etapa_actual].max_hum;
+	control.min_hum = zanahoria_h[cultivo.etapa_actual].min_hum;
+
+	strcpy(cultivo.nombre,"Zanahoria"); // Se guarda el nombre del cultivo.
+	cultivo.tipo = 1; // Se guarda el tipo de cultivo TOMATE = 0.
+
+	// Se habilitan las banderas de control.
+	cultivo.flag.control_activo = 1;
+	cultivo.flag.cambio_etapa = 1;
+}
+
+void configurar_horario_etapa(uint8_t n_etapa,uint8_t valor){
+
+	/* Funcion configurar horario etapa
+	 * Recibe el numero de la etapa y la cantidad de dias que dura la etapa.
+	 * Configura la etapa q es especificada.
+	 */
+	 uint8_t horas_aux = 0;
+
+	 if(valor <= 60){
+		 if((datatime.minutes + valor)>59){
+				 cultivo.etapa[n_etapa].minutes = (datatime.minutes + valor) - 60;
+				 horas_aux++;
+			 }
+			 else{
+				 cultivo.etapa[n_etapa].minutes = (datatime.minutes + valor);
+			 }
+
+			cultivo.etapa[n_etapa].year = datatime.year;
+			cultivo.etapa[n_etapa].hours = datatime.hours + horas_aux;
+			cultivo.etapa[n_etapa].seconds = datatime.seconds;
+			cultivo.etapa[n_etapa].date = datatime.date;
+	 }
+	 else{
+		 cultivo.etapa[n_etapa].year = datatime.year;
+		 cultivo.etapa[n_etapa].hours = datatime.hours;
+		 cultivo.etapa[n_etapa].seconds = datatime.seconds;
+		 cultivo.etapa[n_etapa].minutes = (datatime.minutes + 1);
+		 cultivo.etapa[n_etapa].date = datatime.date;
+	 }
+
+
+}
+
+
+
+
+void cargar_datos(){
+	/*	Funcion cargar_datos()
+	 * 	Esta funcion carga los datos por defecto al sistema de control.
+	 * 	De momento los valores se toman de unos arreglos ya predefinidos, la idea es que sean leidos por memoria externa.
+	 */
+	FIL myFile;   // Filehandler
+	char temp_string[250];
+	//char string[6] = "Hola";
+	char *temp;
+	uint8_t estado_cultivo = -1;
+	uint8_t etapa_actual = -1;
+	uint8_t tipo_cultivo = -1;
+	uint8_t etapa_temp = 0;
+	TM_RTC_t backup[3];
+	uint32_t cant_bytes_archivo = 0;
+
+	// se lee el archivo LOG de la sd.
+	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+		// Media mounten
+		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+			// File zum schreiben im root neu anlegen
+			if(UB_Fatfs_OpenFile(&myFile, "0:/LOG.txt", F_RD)==FATFS_OK) {
+				// ein paar Textzeilen in das File schreiben
+				cant_bytes_archivo = UB_Fatfs_FileSize(&myFile);
+				if(UB_Fatfs_ReadString(&myFile,temp_string,cant_bytes_archivo) == FATFS_OK){
+					tarjeta_sd.flag.fallo_abrir_archivo = 0;
+					//strcpy(tarjeta_sd.lectura,temp_string);
+
+					///////////////Codigo que interpreta el texto////////////
+					temp = strtok(temp_string," ,.-");
+
+					while(temp != NULL){
+						if(!strcmp("CULTIVO_ACTIVO",temp)){
+							temp = strtok(NULL," ,.-");
+							estado_cultivo = atoi(temp);
+						}
+						else if(!strcmp("ETAPA_CULTIVO",temp)){
+							temp = strtok(NULL," ,.-");
+							etapa_actual = atoi(temp);
+						}
+						else if(!strcmp("TIPO_CULTIVO",temp)){
+							temp = strtok(NULL," ,.-");
+							tipo_cultivo = atoi(temp);
+						}
+						temp = strtok(NULL," ,.-");
+
+					}
+					/////////////////////////////////////////////////////////
+				}
+				else{
+					tarjeta_sd.flag.fallo_abrir_archivo = 1;
+				}
+				// File schliessen
+				UB_Fatfs_CloseFile(&myFile);
+			}
+			// Media unmounten
+			UB_Fatfs_UnMount(MMC_0);
+		}
+	}
+
+
+	if(estado_cultivo != -1 && etapa_actual != -1 && tipo_cultivo != -1){ // Se comprueba que el archivo este correcto.
+
+		if(estado_cultivo == 1){ // Si el seguimiento estuvo activo se obtienen las fechas de las etapas.
+
+			// Se lee el archivo ETAPAS de la SD.
+			if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+				//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+				// Media mounten
+				if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+					//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+					// File zum schreiben im root neu anlegen
+					if(UB_Fatfs_OpenFile(&myFile, "0:/ETAPAS.txt", F_RD)==FATFS_OK) {
+						// ein paar Textzeilen in das File schreiben
+						cant_bytes_archivo = UB_Fatfs_FileSize(&myFile);
+						if(UB_Fatfs_ReadString(&myFile,temp_string,cant_bytes_archivo) == FATFS_OK){
+							tarjeta_sd.flag.fallo_abrir_archivo = 0;
+							//strcpy(tarjeta_sd.lectura,temp_string);
+
+							///////////////Codigo que interpreta el texto////////////
+							temp = strtok(temp_string," ,.-");
+
+							while(temp != NULL){
+								if(!strcmp("ETAPA",temp)){
+									temp = strtok(NULL," ,.-");
+									etapa_temp = atoi(temp);
+								}
+								else if(!strcmp("YEAR",temp)){
+									temp = strtok(NULL," ,.-");
+									backup[etapa_temp].year = atoi(temp);
+								}
+								else if(!strcmp("MONTH",temp)){
+									temp = strtok(NULL," ,.-");
+									backup[etapa_temp].month = atoi(temp);
+								}
+								else if(!strcmp("HOURS",temp)){
+									temp = strtok(NULL," ,.-");
+									backup[etapa_temp].hours = atoi(temp);
+								}
+								else if(!strcmp("MINUTES",temp)){
+									temp = strtok(NULL," ,.-");
+									backup[etapa_temp].minutes = atoi(temp);
+								}
+								else if(!strcmp("SECONDS",temp)){
+									temp = strtok(NULL," ,.-");
+									backup[etapa_temp].seconds = atoi(temp);
+								}
+								else if(!strcmp("DAY",temp)){
+									temp = strtok(NULL," ,.-");
+									backup[etapa_temp].date = atoi(temp);
+								}
+
+								temp = strtok(NULL," ,.-");
+
+							}
+							/////////////////////////////////////////////////////////
+						}
+						else{
+							tarjeta_sd.flag.fallo_abrir_archivo = 1;
+						}
+						// File schliessen
+						UB_Fatfs_CloseFile(&myFile);
+					}
+					// Media unmounten
+					UB_Fatfs_UnMount(MMC_0);
+				}
+			}
+
+			sprintf(mensaje_global,"Etapa %d, YEAR: %d, MONTH %d, HOURS %d, MINUTES %d, SECONDS %d, DAY %d.\r\n", 2,backup[2].year,backup[2].month,backup[2].hours,backup[2].minutes, backup[2].seconds, backup[2].date);
+			// Se lee el archivo ETAPAS
+			//			sprintf(mensaje_global,"Wacho");
+
+			// Se comprueba si la ultima fecha es valida (por lo tanto todas son validas)
+			if(fecha_valida(backup[2])){
+				// Se comprueba que la ultima etapa seteada este en una fecha valida, sino se activa la etapa siguiente y asi hasta
+				// llegar a una etapa valida.
+				//sprintf(mensaje_global,"Fecha valida.");
+
+				while(!fecha_valida(backup[etapa_actual]) && etapa_actual < 3){
+					etapa_actual+=1;
+				}
+
+				sprintf(mensaje_global,"La etapa seleccionada: %d.", etapa_actual);
+
+				// Se configura la etapa valida.
+
+				cultivo.etapa[0].year = backup[0].year;
+				cultivo.etapa[0].month = backup[0].month;
+				cultivo.etapa[0].hours = backup[0].hours;
+				cultivo.etapa[0].minutes = backup[0].minutes;
+				cultivo.etapa[0].seconds = backup[0].seconds;
+				cultivo.etapa[0].date = backup[0].date;
+
+				cultivo.etapa[1].year = backup[1].year;
+				cultivo.etapa[1].month = backup[1].month;
+				cultivo.etapa[1].hours = backup[1].hours;
+				cultivo.etapa[1].minutes = backup[1].minutes;
+				cultivo.etapa[1].seconds = backup[1].seconds;
+				cultivo.etapa[1].date = backup[1].date;
+
+				cultivo.etapa[2].year = backup[2].year;
+				cultivo.etapa[2].month = backup[2].month;
+				cultivo.etapa[2].hours = backup[2].hours;
+				cultivo.etapa[2].minutes = backup[2].minutes;
+				cultivo.etapa[2].seconds = backup[2].seconds;
+				cultivo.etapa[2].date = backup[2].date;
+
+				// Se cargan las variables del cultivo en el sistema.
+				cultivo.flag.control_activo = estado_cultivo;
+				cultivo.etapa_actual = etapa_actual;
+				cultivo.tipo = tipo_cultivo;
+
+				// Se setean las variables de control de a cuerdo a la etapa actual.
+				if(cultivo.tipo == 0){
+					control.limite_delta_temp = tomate[cultivo.etapa_actual].limite_delta_temp;
+					control.max_temp_fan = tomate[cultivo.etapa_actual].max_temp_fan;
+					control.min_temp_fan = tomate[cultivo.etapa_actual].min_temp_fan;
+					control.max_temp_calentador = tomate[cultivo.etapa_actual].max_temp_calentador;
+					control.min_temp_calentador = tomate[cultivo.etapa_actual].min_temp_calentador;
+					strcpy(cultivo.nombre,"Tomate");
+				}
+				else if(cultivo.tipo == 1){
+					control.limite_delta_temp = zanahoria[cultivo.etapa_actual].limite_delta_temp;
+					control.max_temp_fan = zanahoria[cultivo.etapa_actual].max_temp_fan;
+					control.min_temp_fan = zanahoria[cultivo.etapa_actual].min_temp_fan;
+					control.max_temp_calentador = zanahoria[cultivo.etapa_actual].max_temp_calentador;
+					control.min_temp_calentador = zanahoria[cultivo.etapa_actual].min_temp_calentador;
+					strcpy(cultivo.nombre,"Zanahoria");
+				}
+
+				AlarmTime.hours = cultivo.etapa[etapa_actual].hours;
+				AlarmTime.minutes = cultivo.etapa[etapa_actual].minutes;
+				AlarmTime.seconds = cultivo.etapa[etapa_actual].seconds;
+				AlarmTime.day = cultivo.etapa[etapa_actual].date;
+				AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
+				TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
+			}
+			else{
+				// Si la fecha no es valida se suspende el seguimiento.
+				sprintf(mensaje_global,"Fecha invalida.");
+				cultivo.flag.control_activo = 0;
+				cultivo.etapa_actual = 0;
+			}
+			// Se comprueba que la ultima etapa seteada este en una fecha valida, sino se activa la etapa siguiente y asi hasta
+			// llegar a una etapa valida.
+
+			// Se configura la etapa valida.
+		}
+		else{ // Si el seguimiento estuvo desactivado se modifican las banderas necesarias.
+			sprintf(mensaje_global,"FALLO");
+			cultivo.flag.control_activo = 0;
+			cultivo.etapa_actual = 0;
+		}
+
+	}
+}
+
+
+// cual?
+
+//configurar_cultivo_tomate();
+
+
+int fecha_valida(TM_RTC_t fecha_control){
+	/*	Funcion fecha_valida()
+	 * 	Funcion encargada de retornar si la fecha ingresada en una etapa es valida o no.
+	 * 	Si la fecha se encuentra en el pasado es rechazada, si es del futuro se acepta.
+	 */
+
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+
+	if(fecha_control.year < datatime.year){
+		return 0;
+	}
+	else if(fecha_control.month < datatime.month){
+		return 0;
+	}
+	else if(fecha_control.date < datatime.date){
+		return 0;
+	}
+	else if(fecha_control.hours < datatime.hours){
+		return 0;
+	}
+	else if(fecha_control.minutes < datatime.minutes){
+		return 0;
+	}
+	else
+		return 1;
+}
+
+
+void backup_etapas(void){
+	FIL myFile;   // Filehandler
+	char temp_string[3][100];
+
+	// Se guardan los horarios de las etapas.
+	sprintf(temp_string[0],"-,ETAPA 0, YEAR %d, MONTH %d, HOURS %d, MINUTES %d, SECONDS %d, DAY %d",
+			cultivo.etapa[0].year,cultivo.etapa[0].month,cultivo.etapa[0].hours,cultivo.etapa[0].minutes,cultivo.etapa[0].seconds, cultivo.etapa[0].date);
+	sprintf(temp_string[1],",ETAPA 1, YEAR %d, MONTH %d, HOURS %d, MINUTES %d, SECONDS %d, DAY %d",
+			cultivo.etapa[1].year,cultivo.etapa[1].month,cultivo.etapa[1].hours,cultivo.etapa[1].minutes,cultivo.etapa[1].seconds, cultivo.etapa[1].date);
+	sprintf(temp_string[2],",ETAPA 2, YEAR %d, MONTH %d, HOURS %d, MINUTES %d, SECONDS %d, DAY %d.",
+			cultivo.etapa[2].year,cultivo.etapa[2].month,cultivo.etapa[2].hours,cultivo.etapa[2].minutes,cultivo.etapa[2].seconds, cultivo.etapa[2].date);
+	//sprintf(temp_string,"%d", cultivo.etapa.hours[1]);
+
+	// Check ob Medium eingelegt ist
+	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+		// Media mounten
+		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+			// File zum schreiben im root neu anlegen
+			if(UB_Fatfs_OpenFile(&myFile, "0:/ETAPAS.txt", F_WR_CLEAR)==FATFS_OK) {
+				// ein paar Textzeilen in das File schreiben
+				UB_Fatfs_WriteString(&myFile,temp_string[0]);
+				UB_Fatfs_WriteString(&myFile,temp_string[1]);
+				UB_Fatfs_WriteString(&myFile,temp_string[2]);
+				// File schliessen
+				UB_Fatfs_CloseFile(&myFile);
+			}
+			// Media unmounten
+			UB_Fatfs_UnMount(MMC_0);
+		}
+	}else{
+	}
+
+}
+
+void log_etapas(void){
+	FIL myFile;   // Filehandler
+	char temp_string[70];
+	enviar_comando("ADENTRO\r\n");
+	sprintf(temp_string,"-,CULTIVO_ACTIVO %d, ETAPA_CULTIVO %d, TIPO_CULTIVO %d.",cultivo.flag.control_activo,cultivo.etapa_actual, cultivo.tipo);
+
+	// Check ob Medium eingelegt ist
+	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+		//GPIO_SetBits(GPIOD,GPIO_Pin_13);
+		// Media mounten
+		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+			//GPIO_SetBits(GPIOD,GPIO_Pin_12);
+			// File zum schreiben im root neu anlegen
+			if(UB_Fatfs_OpenFile(&myFile, "0:/Log.txt", F_WR_CLEAR)==FATFS_OK) {
+				// ein paar Textzeilen in das File schreiben
+				UB_Fatfs_WriteString(&myFile,temp_string);
+				// File schliessen
+				UB_Fatfs_CloseFile(&myFile);
+				enviar_comando("CHLOG\r\n");
+			}
+			else{
+				enviar_comando("FALLO\r\n");
+			}
+			// Media unmounten
+			UB_Fatfs_UnMount(MMC_0);
+		}
+	}else{
+
+	}
+}
+
+void datalogger_mejorado(void){
+	FIL myFile;   // Filehandler
+	char temp_string[16];
+	char temp_msj[100];
+	sprintf(temp_string,"0:/TI-%d%d.csv",datatime.date,datatime.hours);
+	sprintf(temp_msj,"%d:%d:%d;%s;%s;%d;%d\n",datatime.hours,datatime.minutes,datatime.seconds,dht_interior.temperatura_string,dht_exterior.temperatura_string,yl.humedad,ldr.adc_cuentas);
+
+	// Se chequea que el medio este
+	if(UB_Fatfs_CheckMedia(MMC_0)==FATFS_OK) {
+		// Se monta el medio
+		if(UB_Fatfs_Mount(MMC_0)==FATFS_OK) {
+
+			// Si el archivo ya existe se adhiere la info.
+			if(UB_Fatfs_OpenFile(&myFile,temp_string, F_WR)==FATFS_OK) {
+				UB_Fatfs_WriteString(&myFile,temp_msj); // Se agrega el nuevo dato.
+				enviar_comando("Agregando...\r\n");
+
+				UB_Fatfs_CloseFile(&myFile); // Se cierra el archivo.
+			}
+			else{
+				// Si el archivo no existe se crea uno nuevo.
+				if(UB_Fatfs_OpenFile(&myFile,temp_string, F_WR_NEW)==FATFS_OK){
+					UB_Fatfs_WriteString(&myFile,"Hora;Temp Int;Temp Ext;Hum Suel;Luz\n"); // Se agregan los titulos de X e Y
+					UB_Fatfs_WriteString(&myFile,temp_msj); // Se agrega el nuevo dato.
+					enviar_comando("Creando...\r\n");
+					UB_Fatfs_CloseFile(&myFile);// Se cierra el archivo.
+				}
+				else{
+					enviar_comando("NOP\r\n");
+				}
+
+			}
+			// Media unmounten
+			UB_Fatfs_UnMount(MMC_0);
+		}
+	}
+}
+
+
+
+void activar_alarma(void){
+	TM_RTC_GetDateTime(&datatime, TM_RTC_Format_BIN); // Se obtiene la hora actual.
+	/* Set alarm B each 20th day in a month */
+	/* Alarm will be first triggered 10 seconds later as time is configured for RTC */
+	AlarmTime.hours = datatime.hours;
+	AlarmTime.minutes = datatime.minutes+1;
+	AlarmTime.seconds = datatime.seconds;
+	AlarmTime.day = datatime.day;
+	AlarmTime.alarmtype = TM_RTC_AlarmType_DayInMonth;
+	TM_RTC_SetAlarm(TM_RTC_Alarm_B, &AlarmTime, TM_RTC_Format_BIN);
+}
+
+// Handler de interrupciones.
 
 void USART3_IRQHandler(void) {
 	/*	Handler USART3_IRQHandler
