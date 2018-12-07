@@ -29,8 +29,18 @@ extern uint8_t ActState;
 
 struct{
 		unsigned int f_pausa : 1;
+		unsigned int f_cancelar : 1;
 		unsigned int f_tomate : 1;
+		unsigned int f_zanahoria : 1;
+		unsigned int f_humedad : 1;
+		unsigned int f_temp_ext : 1;
+		unsigned int f_temp_int : 1;
 		unsigned int f_bomba : 1;
+		unsigned int f_calentador : 1;
+		unsigned int f_ventana : 1;
+		unsigned int f_ventilador : 1;
+		unsigned int f_log : 1;
+		unsigned int f_etapas : 1;
 }menu_flags;
 
 #define NR_EVENTS 5
